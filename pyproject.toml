@@ -1,0 +1,11 @@
+[project]
+name = "busytag-cli"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pyserial>=3.5",
+    "ttkbootstrap>=1.20.0",
+    "webcolors>=25.10.0",
+]

@@ -6,13 +6,12 @@ This repository provides a Python based CLI util and library to communicate with
 
 ## Usage
 
+### Command Line Interface
 
 ```bash
 pipenv install
 pipenv shell
 ```
-
-### Interface
 
 ```
 usage: main.py [-h] [--debug] --device DEVICE [--json] {show,pictures,led} ...
@@ -29,6 +28,14 @@ options:
   --device DEVICE
   --json
 ```
+
+### Graphical User Interface
+
+```bash
+python gui.py
+```
+
+See [GUI_README.md](GUI_README.md) for more information about the GUI.
 
 ### Show Device Information
 
