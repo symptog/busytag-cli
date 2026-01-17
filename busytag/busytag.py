@@ -61,10 +61,12 @@ class BusyTag:
         RTC_WATCHDOG_RESETS_DIGITAL_CORE_AND_TC_MODULE = 16
 
 
-    def __init__(self, device, baudrate=115200, timeout=1):
+    def __init__(self, device, baudrate=115200, timeout=1, keep_serial: bool = True):
         self.device = device
         self.baudrate = baudrate
         self.timeout = timeout
+        self.keep_serial = keep_serial
+        self.ser = None
 
     def __clean_data(self, data, binary):
         if binary:
@@ -98,17 +100,23 @@ class BusyTag:
     def write(self, data: list[bytes], binary=False):
         response = []
         try:
-            
-            ser = serial.Serial(self.device, baudrate=self.baudrate, timeout=self.timeout)
+            if self.ser:
+                if not self.ser.is_open:
+                    self.ser.open()
+            else:
+                self.ser = serial.Serial(self.device, baudrate=self.baudrate, timeout=self.timeout)
+
             for b in data:
                 serial_logger.debug(f"Write data {b} to {self.device}")
-                ser.write(b)
-                raw_resp = ser.readlines()
+                self.ser.write(b)
+                raw_resp = self.ser.readlines()
                 serial_logger.debug(raw_resp)
                 logger.debug(raw_resp)
                 response.extend(filter(None, [self.__clean_data(x, binary) for x in raw_resp]))
                 #response.append(ser.readlines())
-            ser.close()
+            if not self.keep_serial:
+                self.ser.close()
+                self.ser = None
         except Exception as e:
             serial_logger.exception(e)
         
