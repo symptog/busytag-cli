@@ -14,22 +14,23 @@ pipenv shell
 ```
 
 ```
-usage: main.py [-h] [--debug] --device DEVICE [--json] {show,pictures,led} ...
+usage: main.py [-h] [--debug] --device DEVICE [--json] {show,pictures,led,led-pattern} ...
 
 positional arguments:
-  {show,pictures,led}
-    show               Show Information
-    pictures           Interact with Pictures
-    led                Interact with LEDs
+  {show,pictures,led,led-pattern}
+    show                Show Information
+    pictures            Interact with Pictures
+    led                 Interact with LEDs
+    led-pattern         Interact with LED Patterns
 
 options:
-  -h, --help           show this help message and exit
+  -h, --help            show this help message and exit
   --debug
   --device DEVICE
   --json
 ```
 
-### Graphical User Interface
+### Graphical User Interface (Alpha)
 
 ```bash
 python gui.py
@@ -101,6 +102,55 @@ Turn all leds off.
 
 ```
 ./main.py --device /dev/ttyACM0 led off
+```
+
+#### LED Pattern
+
+```bash
+./main.py --device /dev/ttyACM0 led-pattern --help
+usage: main.py led-pattern [-h] [--repeat REPEAT] pattern
+
+positional arguments:
+  pattern          Pattern Name
+
+options:
+  -h, --help       show this help message and exit
+  --repeat REPEAT  Repeat Pattern n times
+```
+
+##### Example
+
+```bash
+./main.py --device /dev/ttyACM0 led-pattern DEFAULT --repeat 5
+```
+
+#### Available Pattern
+
+```
+DEFAULT
+POLICE_1
+POLICE_2
+RED_FLASHES
+GREEN_FLASHES
+BLUE_FLASHES
+YELLOW_FLASHES
+CYAN_FLASHES
+MAGENTA_FLASHES
+WHITE_FLASHES
+RED_PULSES
+GREEN_PULSES
+BLUE_PULSES
+YELLOW_PULSES
+CYAN_PULSES
+MAGENTA_PULSES
+WHITE_PULSES
+RED_RUNNING
+GREEN_RUNNING
+BLUE_RUNNING
+YELLOW_RUNNING
+CYAN_RUNNING
+MAGENTA_RUNNING
+WHITE_RUNNING
 ```
 
 ### Interacting with Pictures
@@ -176,7 +226,7 @@ Delete picture from device.
 
 ## API
 
-The `BusyTag` class implements all AT commands as definded in thsi documentation:
+The `BusyTag` class implements most AT commands as definded in this documentation:
 
 https://luxafor.helpscoutdocs.com/article/47-busy-tag-usb-cdc-command-reference-guide
 
@@ -219,6 +269,7 @@ def setShowingPicture(self, filename):
 def getAutoStorageScan(self):
 def setAutoStorageScan(self):
 def unsetAutoStorageScan(self):
+def playPattern(self, allow=True, repeat=255):
 def getFile(self, filename, output_file=None):
 def putFile(self, filepath):
 def deleteFile(self, filename):
