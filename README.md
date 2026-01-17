@@ -9,8 +9,8 @@ This repository provides a Python based CLI util and library to communicate with
 ### Command Line Interface
 
 ```bash
-pipenv install
-pipenv shell
+uv sync
+uv run main.py
 ```
 
 ```
@@ -33,7 +33,7 @@ options:
 ### Graphical User Interface (Alpha)
 
 ```bash
-python gui.py
+uv run gui.py
 ```
 
 See [GUI_README.md](GUI_README.md) for more information about the GUI.
@@ -43,7 +43,7 @@ See [GUI_README.md](GUI_README.md) for more information about the GUI.
 Get device information.
 
 ```bash
-./main.py --device /dev/ttyACM0 show 
+uv run main.py --device /dev/ttyACM0 show 
 ID: 34B7DA612B1C
 Name: busytag-612B1C
 Manufacture: GREYNUT LTD
@@ -51,14 +51,14 @@ Firmware: 1.0
 ```
 
 ```bash
-./main.py --device /dev/ttyACM0 --json show
+uv run main.py --device /dev/ttyACM0 --json show
 {"id": "34B7DA612B1C", "name": "busytag-612B1C", "manufacture": "GREYNUT LTD", "firmware_version": "1.0"}
 ```
 
 ### Interact with LEDs
 
 ```bash
-./main.py --device /dev/ttyACM0 led --help
+uv run main.py --device /dev/ttyACM0 led --help
 usage: main.py led [-h] {on,off} ...
 
 positional arguments:
@@ -75,7 +75,7 @@ options:
 Set all or some leds on with the definded color. Optionally reset all leds before changing the color.
 
 ```bash
-./main.py --device /dev/ttyACM0 led on --help    
+uv run main.py --device /dev/ttyACM0 led on --help    
 usage: main.py led on [-h] [--dim DIM] [--reset] [--led {all,0,1,2,3,4,5,6} [{all,0,1,2,3,4,5,6} ...]] color
 
 positional arguments:
@@ -92,7 +92,7 @@ options:
 ##### Example
 
 ```bash
-./main.py --debug --device /dev/ttyACM0 led on yellow --reset --led 0 2 4 6 --dim 0.1
+uv run main.py --debug --device /dev/ttyACM0 led on yellow --reset --led 0 2 4 6 --dim 0.1
 ```
 
 
@@ -101,13 +101,13 @@ options:
 Turn all leds off.
 
 ```
-./main.py --device /dev/ttyACM0 led off
+uv run main.py --device /dev/ttyACM0 led off
 ```
 
 #### LED Pattern
 
 ```bash
-./main.py --device /dev/ttyACM0 led-pattern --help
+uv run main.py --device /dev/ttyACM0 led-pattern --help
 usage: main.py led-pattern [-h] {on,off} ...
 
 positional arguments:
@@ -120,7 +120,7 @@ options:
 ```
 
 ```bash
-./main.py --device /dev/ttyACM0 led-pattern on --help
+uv run main.py --device /dev/ttyACM0 led-pattern on --help
 usage: main.py led-pattern on [-h] [--repeat REPEAT] pattern
 
 positional arguments:
@@ -134,7 +134,7 @@ options:
 ##### Example
 
 ```bash
-./main.py --device /dev/ttyACM0 led-pattern on DEFAULT --repeat 5
+uv run main.py --device /dev/ttyACM0 led-pattern on DEFAULT --repeat 5
 ```
 
 #### Available Pattern
@@ -169,7 +169,7 @@ WHITE_RUNNING
 ### Interacting with Pictures
 
 ```bash
-./main.py --device /dev/ttyACM0 pictures --help
+uv run main.py --device /dev/ttyACM0 pictures --help
 usage: main.py pictures [-h] {list,upload,display,delete} ...
 
 positional arguments:
@@ -189,13 +189,13 @@ List all pictures that are available on the device.
 
 
 ```bash
-./main.py --device /dev/ttyACM0 pictures list  
+uv run main.py --device /dev/ttyACM0 pictures list  
 def.png (15.84 kB)
 fry.gif (14.32 kB)
 ```
 
 ```bash
-./main.py --device /dev/ttyACM0 --json pictures list
+uv run main.py --device /dev/ttyACM0 --json pictures list
 [{"name": "def.png", "size": 16224}, {"name": "fry.gif", "size": 14665}]
 ```
 
@@ -203,8 +203,10 @@ fry.gif (14.32 kB)
 
 Upload a picture to the device. Optionaly set it as a background once uploaded.
 
+Pictures must be of size 240x280px
+
 ```bash
-./main.py --device /dev/ttyACM0 pictures upload --help
+uv run main.py --device /dev/ttyACM0 pictures upload --help
 usage: main.py pictures upload [-h] [--use] filename
 
 positional arguments:
@@ -218,7 +220,7 @@ options:
 ##### Example
 
 ```bash
-./main.py --device /dev/ttyACM0 pictures upload --use ./fry.gif
+uv run main.py --device /dev/ttyACM0 pictures upload --use ./fry.gif
 ```
 
 #### Display Picture
@@ -226,7 +228,7 @@ options:
 Set a picture as background on the device. Picture must already be present.
 
 ```bash
-./main.py --device /dev/ttyACM0 pictures display fry.gif
+uv run main.py --device /dev/ttyACM0 pictures display fry.gif
 ```
 
 #### Delete Picture
@@ -234,7 +236,7 @@ Set a picture as background on the device. Picture must already be present.
 Delete picture from device.
 
 ```bash
-./main.py --device /dev/ttyACM0 pictures delete fry.gif
+uv run main.py --device /dev/ttyACM0 pictures delete fry.gif
 ```
 
 ## API
