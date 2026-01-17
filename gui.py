@@ -1,4 +1,5 @@
 #!/bin/env python3
+# SPDX-License-Identifier: MIT
 
 import tkinter as tk
 from tkinter import messagebox, filedialog
@@ -33,11 +34,11 @@ class BusyTagGUI:
         main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         
         # Device selection with modern layout
-        device_frame = ttk.LabelFrame(main_frame, text="Device Connection")
+        device_frame = ttk.Labelframe(main_frame, text="Device Connection")
         device_frame.pack(fill=tk.X, pady=(0, 10))
         
         # Use grid layout for better alignment
-        ttk.Label(device_frame, text="Serial Port:").grid(row=0, column=0, sticky=tk.W, pady=5)
+        #ttk.Label(device_frame, text="Serial Port:").grid(row=0, column=0, sticky=tk.W, pady=5)
         self.port_combobox = ttk.Combobox(device_frame, textvariable=self.device_path, state="readonly")
         self.port_combobox.grid(row=0, column=1, sticky=tk.EW, padx=10, pady=5)
         
@@ -51,7 +52,7 @@ class BusyTagGUI:
         device_frame.columnconfigure(1, weight=1)
         
         # Device info display with scrollbar
-        info_frame = ttk.LabelFrame(main_frame, text="Device Information")
+        info_frame = ttk.Labelframe(main_frame, text="Device Information")
         info_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
         
         # Add scrollbar
@@ -65,7 +66,7 @@ class BusyTagGUI:
         scrollbar.config(command=self.info_text.yview)
         
         # LED Control with modern layout
-        led_frame = ttk.LabelFrame(main_frame, text="LED Control")
+        led_frame = ttk.Labelframe(main_frame, text="LED Control")
         led_frame.pack(fill=tk.X, pady=(0, 10))
         
         # Color selection with modern styling
@@ -85,14 +86,16 @@ class BusyTagGUI:
         
         ttk.Label(led_row, text="LEDs:").pack(side=tk.LEFT)
         self.led_all = tk.IntVar(value=1)
-        ttk.Checkbutton(led_row, text="All", variable=self.led_all).pack(side=tk.LEFT, padx=10)
+        ttk.Checkbutton(led_row, text="All", variable=self.led_all, command=self.toggle_led_all).pack(side=tk.LEFT, padx=10)
         
+        self.led_vars = []
         for i in range(7):
             var = tk.IntVar()
-            ttk.Checkbutton(led_row, text=f"LED{i}", variable=var).pack(side=tk.LEFT, padx=2)
+            self.led_vars.append(var)
+            ttk.Checkbutton(led_row, text=f"LED{i}", variable=var, command=self.deselect_led_all).pack(side=tk.LEFT, padx=2)
         
         # Picture management with modern layout
-        picture_frame = ttk.LabelFrame(main_frame, text="Picture Management")
+        picture_frame = ttk.Labelframe(main_frame, text="Picture Management")
         picture_frame.pack(fill=tk.BOTH, expand=True, pady=(0, 10))
         
         picture_btn_frame = ttk.Frame(picture_frame)
@@ -178,6 +181,17 @@ class BusyTagGUI:
         if result:
             self.color_value.set(result.hex[1:])
     
+    def toggle_led_all(self):
+        """Toggle all LEDs selection"""
+        if self.led_all.get():
+            # Select all LEDs
+            for var in self.led_vars:
+                var.set(1)
+    
+    def deselect_led_all(self):
+        """Deselect all LEDs checkbox"""
+        self.led_all.set(0)
+
     def set_led_color(self):
         """Set LED color"""
         if not self.bt:
@@ -194,8 +208,14 @@ class BusyTagGUI:
             if self.led_all.get():
                 leds = [BusyTag.LEDS.ALL]
             else:
-                # TODO: Implement individual LED selection
-                leds = [BusyTag.LEDS.ALL]
+                # Get selected individual LEDs
+                for i, var in enumerate(self.led_vars):
+                    if var.get():
+                        leds.append(BusyTag.LEDS[f"LED{i}"])
+                
+                if not leds:
+                    messagebox.showerror("Error", "No LEDs selected")
+                    return
             
             self.bt.setSolidColor(color, leds=leds)
             self.status_var.set(f"LED color set to {color}")
