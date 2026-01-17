@@ -197,7 +197,7 @@ class BusyTag:
         c = parse_color_string(color, scale)
         # Clear ALL
         if clear: 
-            buf = f"AT+SC=127,000000\r\n"
+            buf = "AT+SC=127,000000\r\n"
             resp = self.write([buf.encode()])
             if 'OK' not in resp:
                 logger.error(resp)
@@ -237,7 +237,7 @@ class BusyTag:
 
     def setDisplayBrightness(self, brightness=100):
         if brightness < 1 or brightness > 100:
-            logger.error(f"Display Brightness value must be in range 1-100")
+            logger.error("Display Brightness value must be in range 1-100")
             return
 
         # Set Brightness

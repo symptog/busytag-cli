@@ -1,17 +1,14 @@
 #!/bin/env python3
 # SPDX-License-Identifier: MIT
 
+from busytag import BusyTag, BusyTagDefaultPattern
+
 import json
-import time
-import serial
-import serial.tools.list_ports
 import sys
 import os
 
 import logging
 logger = logging.getLogger(__name__)
-
-from busytag import BusyTag, BusyTagPattern, BusyTagDefaultPattern
  
 def show_command(args, bt):
     logger.debug(args)
@@ -36,7 +33,7 @@ def picture_command(args, bt):
                 print(f"{p["name"]} ({kb_size:.2f} kB)")
     elif args.pcommand == "upload":
         bt.putFile(args.filename)
-        fname = os.path.basename(filename)
+        fname = os.path.basename(args.filename)
         if args.use:
             bt.setShowingPicture(fname)
     elif args.pcommand == "display":
