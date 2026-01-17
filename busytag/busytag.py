@@ -1,3 +1,5 @@
+# SPDX-License-Identifier: MIT
+
 from .color import parse_color_string
 
 from typing import List
