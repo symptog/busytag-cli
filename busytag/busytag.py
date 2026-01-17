@@ -1,24 +1,40 @@
-from enum import IntEnum
+from .color import parse_color_string
+
+from typing import List
+from enum import IntEnum, Enum
 import serial
 import os
 import logging
 logger = logging.getLogger(__name__)
 serial_logger = logging.getLogger(f"{__name__}.serial")
 
-from .color import parse_color_string
 
 class BusyTag:
 
     class LEDS(IntEnum):
-        ALL  = 0b01111111
-        LED0 = 0b00000001
-        LED1 = 0b00000010
-        LED2 = 0b00000100
-        LED3 = 0b00001000
-        LED4 = 0b00010000
-        LED5 = 0b00100000
-        LED6 = 0b01000000
-    
+        ALL  = 0b01111111  # 127
+        LED0 = 0b00000001  # 1
+        LED1 = 0b00000010  # 2
+        LED2 = 0b00000100  # 4
+        LED3 = 0b00001000  # 8
+        LED4 = 0b00010000  # 16
+        LED5 = 0b00100000  # 32
+        LED6 = 0b01000000  # 64
+
+        # Left Right Pattern
+        RIGHT = 0b01111000  # 120
+        LEFT  = 0b00001111  # 15
+
+        # Running Pattern
+        RUN0  = 0b10000001  # 129
+        RUN1  = 0b10000010  # 130
+        RUN2  = 0b10000100  # 132
+        RUN3  = 0b10001000  # 136
+        RUN4  = 0b10010000  # 144
+        RUN5  = 0b10100000  # 160
+        RUN6  = 0b11000000  # 192
+
+
     class ErrorCode(IntEnum):
         NONE = -1
         UNKNOWN_ERROR = 0
@@ -192,16 +208,18 @@ class BusyTag:
             )))
         return patterns
 
-    def setCustomPattern(self, patterns=[]):
+    def setCustomPattern(self, patterns: List = [], repeat = 255):
         # Set Pattern
         num_pattern = len(patterns)
         buf = [f"AT+CP={num_pattern}"]
         for p in patterns:
-            buf.append(f"+CP={p}\r\n")
+            buf.append(f"+CP:{str(p)}\r\n")
 
         resp = self.write([b.encode() for b in buf])
         if 'OK' not in resp:
             logger.error(resp)
+
+        self.playPattern(True, repeat)
 
     def getDisplayBrightness(self):
         resp = self.write([b'AT+DB?\r\n'])
@@ -320,6 +338,14 @@ class BusyTag:
 
     # Actions
 
+    def playPattern(self, allow: bool = True, repeat: int = 255):
+        # AT+PP=allow,repeat
+        # repeat 255 => infinite
+        buf = f"AT+PP={1 if allow else 0},{repeat}\r\n"
+        resp = self.write([buf.encode()])
+        if 'OK' not in resp:
+            logger.error(resp)
+
     def getFile(self, filename, output_file=None):
         # AT+GF=filename
         buf = f"AT+GF={filename}\r\n"
@@ -392,8 +418,8 @@ class BusyTag:
             logger.error(resp)
 
 class BusyTagPattern:
-    def __init__(self, color, scale=1.0, leds=[BusyTag.LEDS.ALL], speed=100, delay=0):
-        self.color = parse_color_string(color)
+    def __init__(self, leds=[BusyTag.LEDS.ALL], color="FFFFFF", scale=1.0, speed=100, delay=0):
+        self.color = parse_color_string(color, scale=scale)
         self.scale = scale
         self.leds = leds
         self.speed = speed
@@ -401,3 +427,149 @@ class BusyTagPattern:
     
     def __str__(self):
         return f"{sum(self.leds)},{self.color[0]:02x}{self.color[1]:02x}{self.color[2]:02x},{self.speed},{self.delay}"
+
+
+class BusyTagDefaultPattern(Enum):
+    DEFAULT = [
+        BusyTagPattern([BusyTag.LEDS.ALL], "1291AF", 1.0, 100, 0),
+        BusyTagPattern([BusyTag.LEDS.ALL], "FF0000", 1.0, 100, 0),
+    ]
+    POLICE_1 = [
+        BusyTagPattern([BusyTag.LEDS.LEFT], "FF0000", 1.0, 5, 50),
+        BusyTagPattern([BusyTag.LEDS.LEFT], "000000", 1.0, 5, 50),
+        BusyTagPattern([BusyTag.LEDS.RIGHT], "0000FF", 1.0, 5, 50),
+        BusyTagPattern([BusyTag.LEDS.RIGHT], "000000", 1.0, 5, 50),
+    ]
+    POLICE_2 = [
+        BusyTagPattern([BusyTag.LEDS.LEFT], "FF0000", 1.0, 3, 20),
+        BusyTagPattern([BusyTag.LEDS.LEFT], "000000", 1.0, 3, 20),
+        BusyTagPattern([BusyTag.LEDS.LEFT], "FF0000", 1.0, 3, 20),
+        BusyTagPattern([BusyTag.LEDS.LEFT], "000000", 1.0, 3, 20),
+        BusyTagPattern([BusyTag.LEDS.RIGHT], "0000FF", 1.0, 3, 20),
+        BusyTagPattern([BusyTag.LEDS.RIGHT], "000000", 1.0, 5, 20),
+        BusyTagPattern([BusyTag.LEDS.RIGHT], "0000FF", 1.0, 3, 20),
+        BusyTagPattern([BusyTag.LEDS.RIGHT], "000000", 1.0, 5, 20),
+    ]
+
+    RED_FLASHES = [
+        BusyTagPattern([BusyTag.LEDS.ALL], "FF0000", 1.0, 5, 10),
+        BusyTagPattern([BusyTag.LEDS.ALL], "000000", 1.0, 5, 10),
+    ]
+    GREEN_FLASHES = [
+        BusyTagPattern([BusyTag.LEDS.ALL], "00FF00", 1.0, 5, 10),
+        BusyTagPattern([BusyTag.LEDS.ALL], "000000", 1.0, 5, 10),
+    ]
+    BLUE_FLASHES = [
+        BusyTagPattern([BusyTag.LEDS.ALL], "0000FF", 1.0, 5, 10),
+        BusyTagPattern([BusyTag.LEDS.ALL], "000000", 1.0, 5, 10),
+    ]
+    YELLOW_FLASHES = [
+        BusyTagPattern([BusyTag.LEDS.ALL], "FFFF00", 1.0, 5, 10),
+        BusyTagPattern([BusyTag.LEDS.ALL], "000000", 1.0, 5, 10),
+    ]
+    CYAN_FLASHES = [
+        BusyTagPattern([BusyTag.LEDS.ALL], "00FFFF", 1.0, 5, 10),
+        BusyTagPattern([BusyTag.LEDS.ALL], "000000", 1.0, 5, 10),
+    ]
+    MAGENTA_FLASHES = [
+        BusyTagPattern([BusyTag.LEDS.ALL], "FF00FF", 1.0, 5, 10),
+        BusyTagPattern([BusyTag.LEDS.ALL], "000000", 1.0, 5, 10),
+    ]
+    WHITE_FLASHES = [
+        BusyTagPattern([BusyTag.LEDS.ALL], "FFFFFF", 1.0, 5, 10),
+        BusyTagPattern([BusyTag.LEDS.ALL], "000000", 1.0, 5, 10),
+    ]
+
+    RED_PULSES = [
+        BusyTagPattern([BusyTag.LEDS.ALL], "FF0000", 1.0, 150, 10),
+        BusyTagPattern([BusyTag.LEDS.ALL], "110000", 1.0, 150, 10),
+    ]
+    GREEN_PULSES = [
+        BusyTagPattern([BusyTag.LEDS.ALL], "00FF00", 1.0, 150, 10),
+        BusyTagPattern([BusyTag.LEDS.ALL], "001100", 1.0, 150, 10),
+    ]
+    BLUE_PULSES = [
+        BusyTagPattern([BusyTag.LEDS.ALL], "0000FF", 1.0, 150, 10),
+        BusyTagPattern([BusyTag.LEDS.ALL], "000011", 1.0, 150, 10),
+    ]
+    YELLOW_PULSES = [
+        BusyTagPattern([BusyTag.LEDS.ALL], "FFFF00", 1.0, 150, 10),
+        BusyTagPattern([BusyTag.LEDS.ALL], "111100", 1.0, 150, 10),
+    ]
+    CYAN_PULSES = [
+        BusyTagPattern([BusyTag.LEDS.ALL], "00FFFF", 1.0, 150, 10),
+        BusyTagPattern([BusyTag.LEDS.ALL], "001111", 1.0, 150, 10),
+    ]
+    MAGENTA_PULSES = [
+        BusyTagPattern([BusyTag.LEDS.ALL], "FF00FF", 1.0, 150, 10),
+        BusyTagPattern([BusyTag.LEDS.ALL], "110011", 1.0, 150, 10),
+    ]
+    WHITE_PULSES = [
+        BusyTagPattern([BusyTag.LEDS.ALL], "FFFFFF", 1.0, 150, 10),
+        BusyTagPattern([BusyTag.LEDS.ALL], "111111", 1.0, 150, 10),
+    ]
+
+    RED_RUNNING = [
+        BusyTagPattern([BusyTag.LEDS.RUN0], "FF0000", 1.0, 10, 0),
+        BusyTagPattern([BusyTag.LEDS.RUN1], "FF0000", 1.0, 10, 0),
+        BusyTagPattern([BusyTag.LEDS.RUN2], "FF0000", 1.0, 10, 0),
+        BusyTagPattern([BusyTag.LEDS.RUN3], "FF0000", 1.0, 10, 0),
+        BusyTagPattern([BusyTag.LEDS.RUN4], "FF0000", 1.0, 10, 0),
+        BusyTagPattern([BusyTag.LEDS.RUN5], "FF0000", 1.0, 10, 0),
+        BusyTagPattern([BusyTag.LEDS.RUN6], "FF0000", 1.0, 10, 0),
+    ]
+    GREEN_RUNNING = [
+        BusyTagPattern([BusyTag.LEDS.RUN0], "00FF00", 1.0, 10, 0),
+        BusyTagPattern([BusyTag.LEDS.RUN1], "00FF00", 1.0, 10, 0),
+        BusyTagPattern([BusyTag.LEDS.RUN2], "00FF00", 1.0, 10, 0),
+        BusyTagPattern([BusyTag.LEDS.RUN3], "00FF00", 1.0, 10, 0),
+        BusyTagPattern([BusyTag.LEDS.RUN4], "00FF00", 1.0, 10, 0),
+        BusyTagPattern([BusyTag.LEDS.RUN5], "00FF00", 1.0, 10, 0),
+        BusyTagPattern([BusyTag.LEDS.RUN6], "00FF00", 1.0, 10, 0),
+    ]
+    BLUE_RUNNING = [
+        BusyTagPattern([BusyTag.LEDS.RUN0], "0000FF", 1.0, 10, 0),
+        BusyTagPattern([BusyTag.LEDS.RUN1], "0000FF", 1.0, 10, 0),
+        BusyTagPattern([BusyTag.LEDS.RUN2], "0000FF", 1.0, 10, 0),
+        BusyTagPattern([BusyTag.LEDS.RUN3], "0000FF", 1.0, 10, 0),
+        BusyTagPattern([BusyTag.LEDS.RUN4], "0000FF", 1.0, 10, 0),
+        BusyTagPattern([BusyTag.LEDS.RUN5], "0000FF", 1.0, 10, 0),
+        BusyTagPattern([BusyTag.LEDS.RUN6], "0000FF", 1.0, 10, 0),
+    ]
+    YELLOW_RUNNING = [
+        BusyTagPattern([BusyTag.LEDS.RUN0], "FFFF00", 1.0, 10, 0),
+        BusyTagPattern([BusyTag.LEDS.RUN1], "FFFF00", 1.0, 10, 0),
+        BusyTagPattern([BusyTag.LEDS.RUN2], "FFFF00", 1.0, 10, 0),
+        BusyTagPattern([BusyTag.LEDS.RUN3], "FFFF00", 1.0, 10, 0),
+        BusyTagPattern([BusyTag.LEDS.RUN4], "FFFF00", 1.0, 10, 0),
+        BusyTagPattern([BusyTag.LEDS.RUN5], "FFFF00", 1.0, 10, 0),
+        BusyTagPattern([BusyTag.LEDS.RUN6], "FFFF00", 1.0, 10, 0),
+    ]
+    CYAN_RUNNING = [
+        BusyTagPattern([BusyTag.LEDS.RUN0], "00FFFF", 1.0, 10, 0),
+        BusyTagPattern([BusyTag.LEDS.RUN1], "00FFFF", 1.0, 10, 0),
+        BusyTagPattern([BusyTag.LEDS.RUN2], "00FFFF", 1.0, 10, 0),
+        BusyTagPattern([BusyTag.LEDS.RUN3], "00FFFF", 1.0, 10, 0),
+        BusyTagPattern([BusyTag.LEDS.RUN4], "00FFFF", 1.0, 10, 0),
+        BusyTagPattern([BusyTag.LEDS.RUN5], "00FFFF", 1.0, 10, 0),
+        BusyTagPattern([BusyTag.LEDS.RUN6], "00FFFF", 1.0, 10, 0),
+    ]
+    MAGENTA_RUNNING = [
+        BusyTagPattern([BusyTag.LEDS.RUN0], "FF00FF", 1.0, 10, 0),
+        BusyTagPattern([BusyTag.LEDS.RUN1], "FF00FF", 1.0, 10, 0),
+        BusyTagPattern([BusyTag.LEDS.RUN2], "FF00FF", 1.0, 10, 0),
+        BusyTagPattern([BusyTag.LEDS.RUN3], "FF00FF", 1.0, 10, 0),
+        BusyTagPattern([BusyTag.LEDS.RUN4], "FF00FF", 1.0, 10, 0),
+        BusyTagPattern([BusyTag.LEDS.RUN5], "FF00FF", 1.0, 10, 0),
+        BusyTagPattern([BusyTag.LEDS.RUN6], "FF00FF", 1.0, 10, 0),
+    ]
+    WHITE_RUNNING = [
+        BusyTagPattern([BusyTag.LEDS.RUN0], "FFFFFF", 1.0, 10, 0),
+        BusyTagPattern([BusyTag.LEDS.RUN1], "FFFFFF", 1.0, 10, 0),
+        BusyTagPattern([BusyTag.LEDS.RUN2], "FFFFFF", 1.0, 10, 0),
+        BusyTagPattern([BusyTag.LEDS.RUN3], "FFFFFF", 1.0, 10, 0),
+        BusyTagPattern([BusyTag.LEDS.RUN4], "FFFFFF", 1.0, 10, 0),
+        BusyTagPattern([BusyTag.LEDS.RUN5], "FFFFFF", 1.0, 10, 0),
+        BusyTagPattern([BusyTag.LEDS.RUN6], "FFFFFF", 1.0, 10, 0),
+    ]
+

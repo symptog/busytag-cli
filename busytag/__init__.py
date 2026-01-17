@@ -1,3 +1,3 @@
-from .busytag import BusyTag, BusyTagPattern
+from .busytag import BusyTag, BusyTagPattern, BusyTagDefaultPattern
 
-__all__ = ["BusyTag", "BusyTagPattern"]
+__all__ = ["BusyTag", "BusyTagPattern", "BusyTagDefaultPattern"]

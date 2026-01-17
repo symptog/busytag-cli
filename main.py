@@ -10,7 +10,7 @@ import os
 import logging
 logger = logging.getLogger(__name__)
 
-from busytag import BusyTag, BusyTagPattern
+from busytag import BusyTag, BusyTagPattern, BusyTagDefaultPattern
  
 def show_command(args, bt):
     logger.debug(args)
@@ -59,7 +59,16 @@ def led_command(args, bt):
     elif args.lcommand == "off":
         bt.setSolidColor("000000", clear=False)
 
-
+def led_pattern_command(args, bt):
+    logger.debug(args)
+    try:
+        pattern = BusyTagDefaultPattern[args.pattern.upper()]
+        bt.setCustomPattern(pattern.value, args.repeat)
+    except KeyError as e:
+        print("Available Pattern:")
+        for p in BusyTagDefaultPattern:
+            print(p.name)
+    
 def main():
     import argparse
 
@@ -107,6 +116,11 @@ def main():
     # LED off
     led_off = led_subparsers.add_parser("off", help="Set LEDs Off")
 
+    # LED PATTERN
+    led_pattern = subparsers.add_parser('led-pattern', help="Interact with LED Patterns")
+    led_pattern.add_argument("pattern", type=str, default="DEFAULT", help="Pattern Name")
+    led_pattern.add_argument("--repeat", type=int, default=255, help="Repeat Pattern n times")
+    led_pattern.set_defaults(func=led_pattern_command)
 
     args = parser.parse_args()
 
