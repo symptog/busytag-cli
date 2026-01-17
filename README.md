@@ -14,14 +14,15 @@ uv run main.py
 ```
 
 ```
-usage: main.py [-h] [--debug] --device DEVICE [--json] {show,pictures,led,led-pattern} ...
+usage: main.py [-h] [--debug] --device DEVICE [--json] {show,pictures,led,led-pattern,raw} ...
 
 positional arguments:
-  {show,pictures,led,led-pattern}
+  {show,pictures,led,led-pattern,raw}
     show                Show Information
     pictures            Interact with Pictures
     led                 Interact with LEDs
     led-pattern         Interact with LED Patterns
+    raw                 Send raw command
 
 options:
   -h, --help            show this help message and exit
@@ -189,7 +190,7 @@ List all pictures that are available on the device.
 
 
 ```bash
-uv run main.py --device /dev/ttyACM0 pictures list  
+uv run main.py --device /dev/ttyACM0 pictures list 
 def.png (15.84 kB)
 fry.gif (14.32 kB)
 ```
@@ -239,6 +240,28 @@ Delete picture from device.
 uv run main.py --device /dev/ttyACM0 pictures delete fry.gif
 ```
 
+### Raw Command
+
+Send raw AT commands to the device.
+
+```bash
+uv run main.py --device /dev/ttyACM0 raw --help
+usage: main.py raw [-h] [--json] command
+
+positional arguments:
+  command              Command to send
+
+options:
+  -h, --help           show this help message and exit
+  --json                Output result as JSON
+```
+
+##### Example
+
+```bash
+uv run main.py --device /dev/ttyACM0 raw "AT+GDN"
+```
+
 ## API
 
 The `BusyTag` class implements most AT commands as definded in this documentation:
@@ -265,7 +288,7 @@ def getLastResetReasonCore1(self):
 def getSolidColor(self):
 def setSolidColor(self, color="red", scale = 1.0, leds=[LEDS.ALL], clear=True):
 def getCustomPattern(self):
-def setCustomPattern(self, patterns=[]):
+def setCustomPattern(self, patterns=[], repeat=255):
 def getDisplayBrightness(self):
 def setDisplayBrightness(self, brightness=100):
 def getShowAfterDrop(self):
