@@ -108,7 +108,20 @@ Turn all leds off.
 
 ```bash
 ./main.py --device /dev/ttyACM0 led-pattern --help
-usage: main.py led-pattern [-h] [--repeat REPEAT] pattern
+usage: main.py led-pattern [-h] {on,off} ...
+
+positional arguments:
+  {on,off}
+    on        Set LED Pattern
+    off       Stop LED Pattern
+
+options:
+  -h, --help  show this help message and exit
+```
+
+```bash
+./main.py --device /dev/ttyACM0 led-pattern on --help
+usage: main.py led-pattern on [-h] [--repeat REPEAT] pattern
 
 positional arguments:
   pattern          Pattern Name
@@ -121,7 +134,7 @@ options:
 ##### Example
 
 ```bash
-./main.py --device /dev/ttyACM0 led-pattern DEFAULT --repeat 5
+./main.py --device /dev/ttyACM0 led-pattern on DEFAULT --repeat 5
 ```
 
 #### Available Pattern

@@ -62,13 +62,24 @@ def led_command(args, bt):
 
 def led_pattern_command(args, bt):
     logger.debug(args)
-    try:
-        pattern = BusyTagDefaultPattern[args.pattern.upper()]
-        bt.setCustomPattern(pattern.value, args.repeat)
-    except KeyError as e:
-        print("Available Pattern:")
-        for p in BusyTagDefaultPattern:
-            print(p.name)
+    if args.lpcommand == "on":
+        try:
+            pattern = BusyTagDefaultPattern[args.pattern.upper()]
+            bt.setCustomPattern(pattern.value, args.repeat)
+        except KeyError as e:
+            print("Available Pattern:")
+            for p in BusyTagDefaultPattern:
+                print(p.name)
+    elif args.lpcommand == "off":
+        bt.playPattern(0,0)
+
+def raw_command(args, bt):
+    logger.debug(args)
+    result = bt.write([f"{args.command}\r\n".encode()])
+    if args.json:
+        print(json.dumps(result))
+    else:
+        print(result)
     
 def main():
     import argparse
@@ -119,9 +130,19 @@ def main():
 
     # LED PATTERN
     led_pattern = subparsers.add_parser('led-pattern', help="Interact with LED Patterns")
-    led_pattern.add_argument("pattern", type=str, default="DEFAULT", help="Pattern Name")
-    led_pattern.add_argument("--repeat", type=int, default=255, help="Repeat Pattern n times")
     led_pattern.set_defaults(func=led_pattern_command)
+    led_pattern_subparsers = led_pattern.add_subparsers(dest="lpcommand")
+
+    led_pattern_on = led_pattern_subparsers.add_parser("on", help="Set LED Pattern")
+    led_pattern_on.add_argument("pattern", type=str, default="DEFAULT", help="Pattern Name")
+    led_pattern_on.add_argument("--repeat", type=int, default=255, help="Repeat Pattern n times")
+
+    led_pattern_off = led_pattern_subparsers.add_parser("off", help="Stop LED Pattern")
+
+    # RAW
+    raw = subparsers.add_parser('raw', help="Send raw command")
+    raw.add_argument("command", type=str, help="Command to send")
+    raw.set_defaults(func=raw_command)
 
     args = parser.parse_args()
 

@@ -69,11 +69,18 @@ class BusyTag:
     def __clean_data(self, data, binary):
         if binary:
             return data
+
         try:
             d = data.decode('utf-8').strip()
         except UnicodeDecodeError:
             return data
         
+        if 'error' in d.lower():
+            if ':' in d:
+                error = self.ErrorCode(int(d.split(':')[1]))
+                logger.error(f"Error in output: {error.name} (Line: {d})")
+            return None
+
         if ':' in d:
             d = d.split(':')[1]
         return d
@@ -98,7 +105,8 @@ class BusyTag:
                 ser.write(b)
                 raw_resp = ser.readlines()
                 serial_logger.debug(raw_resp)
-                response.extend([self.__clean_data(x, binary) for x in raw_resp])
+                logger.debug(raw_resp)
+                response.extend(filter(None, [self.__clean_data(x, binary) for x in raw_resp]))
                 #response.append(ser.readlines())
             ser.close()
         except Exception as e:
@@ -340,10 +348,10 @@ class BusyTag:
 
     # Actions
 
-    def playPattern(self, allow: bool = True, repeat: int = 255):
+    def playPattern(self, active: bool = True, repeat: int = 255):
         # AT+PP=allow,repeat
         # repeat 255 => infinite
-        buf = f"AT+PP={1 if allow else 0},{repeat}\r\n"
+        buf = f"AT+PP={1 if active else 0},{repeat}\r\n"
         resp = self.write([buf.encode()])
         if 'OK' not in resp:
             logger.error(resp)
@@ -432,6 +440,7 @@ class BusyTagPattern:
 
 
 class BusyTagDefaultPattern(Enum):
+
     DEFAULT = [
         BusyTagPattern([BusyTag.LEDS.ALL], "1291AF", 1.0, 100, 0),
         BusyTagPattern([BusyTag.LEDS.ALL], "FF0000", 1.0, 100, 0),
