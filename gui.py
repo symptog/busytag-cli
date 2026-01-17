@@ -8,13 +8,12 @@ from busytag import BusyTag
 
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
-from ttkbootstrap.dialogs import ColorChooserDialog
 
 class BusyTagGUI:
     def __init__(self, root):
         self.root = root
         self.root.title("BusyTag Controller")
-        self.root.geometry("900x700")
+        self.root.geometry("800x800")
         self.root.minsize(800, 600)
         
         # Modern styling
@@ -93,6 +92,35 @@ class BusyTagGUI:
             var = tk.IntVar()
             self.led_vars.append(var)
             ttk.Checkbutton(led_row, text=f"LED{i}", variable=var, command=self.deselect_led_all).pack(side=tk.LEFT, padx=2)
+        
+        # Pattern selection
+        pattern_frame = ttk.Labelframe(main_frame, text="LED Pattern")
+        pattern_frame.pack(fill=tk.X, pady=(0, 10))
+        
+        pattern_row = ttk.Frame(pattern_frame)
+        pattern_row.pack(fill=tk.X, pady=5)
+        
+        ttk.Label(pattern_row, text="Pattern:").pack(side=tk.LEFT)
+        self.pattern_var = tk.StringVar(value="DEFAULT")
+        pattern_combobox = ttk.Combobox(pattern_row, textvariable=self.pattern_var, state="readonly", width=15)
+        pattern_combobox.pack(side=tk.LEFT, padx=10)
+        
+        # Populate pattern combobox with available patterns
+        from busytag import BusyTagDefaultPattern
+        pattern_names = [p.name for p in BusyTagDefaultPattern]
+        pattern_combobox["values"] = pattern_names
+        
+        ttk.Button(pattern_row, text="Play Pattern", command=self.play_pattern, bootstyle="success-outline").pack(side=tk.LEFT, padx=5)
+        ttk.Button(pattern_row, text="Stop Pattern", command=self.stop_pattern, bootstyle="danger-outline").pack(side=tk.LEFT, padx=5)
+        
+        # Pattern repeat control
+        repeat_row = ttk.Frame(pattern_frame)
+        repeat_row.pack(fill=tk.X, pady=(0, 5))
+        
+        ttk.Label(repeat_row, text="Repeat (times):").pack(side=tk.LEFT)
+        self.repeat_value = tk.StringVar(value="255")
+        repeat_entry = ttk.Entry(repeat_row, textvariable=self.repeat_value, width=6)
+        repeat_entry.pack(side=tk.LEFT, padx=10)
         
         # Picture management with modern layout
         picture_frame = ttk.Labelframe(main_frame, text="Picture Management")
@@ -312,6 +340,35 @@ class BusyTagGUI:
             self.list_pictures()
         except Exception as e:
             messagebox.showerror("Error", f"Failed to delete picture: {e}")
+    
+    def play_pattern(self):
+        """Play the selected LED pattern"""
+        if not self.bt:
+            messagebox.showerror("Error", "Not connected to device")
+            return
+        
+        try:
+            from busytag import BusyTagDefaultPattern
+            pattern_name = self.pattern_var.get()
+            repeat = int(self.repeat_value.get())
+            
+            pattern = BusyTagDefaultPattern[pattern_name.upper()]
+            self.bt.setCustomPattern(pattern.value, repeat)
+            self.status_var.set(f"Playing pattern: {pattern_name}")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to play pattern: {e}")
+    
+    def stop_pattern(self):
+        """Stop the current LED pattern"""
+        if not self.bt:
+            messagebox.showerror("Error", "Not connected to device")
+            return
+        
+        try:
+            self.bt.playPattern(False, 0)
+            self.status_var.set("Pattern stopped")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to stop pattern: {e}")
 
 if __name__ == "__main__":
     root = ttk.Window(themename="superhero")
