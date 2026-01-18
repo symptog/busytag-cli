@@ -316,8 +316,8 @@ class BusyTag:
             
         Example:
             [
-                {"name": "file1.txt", "type": "TXT", "size": 1024},
-                {"name": "file2.bin", "type": "BIN", "size": 2048}
+                {"name": "file1.txt", "type": "file", "size": 1024},
+                {"name": "file2.bin", "type": "file", "size": 2048}
             ]
         """
         resp: list[str] = self.write([b'AT+GFL\r\n']) # ty: ignore[invalid-assignment]
