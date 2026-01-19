@@ -417,7 +417,7 @@ class BusyTag:
         resp: list[str] = self.write([b'AT+SC?\r\n']) # ty: ignore[invalid-assignment]
         return resp[0]
 
-    def setSolidColor(self, color: str = "red", scale: float = 1.0, leds: List[LEDS] = [LEDS.ALL], clear: bool = True) -> None:
+    def setSolidColor(self, color: str = "red", scale: float = 1.0, leds: List[LEDS] = [LEDS.ALL], clear: bool = True) -> bool:
         """Set a solid color on the BusyTag device.
         
         This method configures the BusyTag to display a solid color on specified LEDs.
@@ -440,11 +440,15 @@ class BusyTag:
             resp: list[str] = self.write([buf.encode()]) # ty: ignore[invalid-assignment]
             if 'OK' not in resp:
                 logger.error(resp)
+            return False
+
         # Set Color
         buf = f"AT+SC={sum(leds)},{c[0]:02x}{c[1]:02x}{c[2]:02x}\r\n"
         resp: list[str] = self.write([buf.encode()]) # ty: ignore[invalid-assignment]
         if 'OK' not in resp:
             logger.error(resp)
+            return False
+        return True
 
     def getCustomPattern(self) -> List['BusyTagPattern']:
         """Get the current custom pattern configuration from the BusyTag device.
@@ -467,7 +471,7 @@ class BusyTag:
             )))
         return patterns
 
-    def setCustomPattern(self, patterns: List = ['BusyTagPattern'], repeat = 255, active: bool = True) -> None:
+    def setCustomPattern(self, patterns: List = ['BusyTagPattern'], repeat = 255, active: bool = True) -> bool:
         """Set a custom pattern on the BusyTag device.
         
         This method configures the BusyTag to display a sequence of patterns,
@@ -477,6 +481,9 @@ class BusyTag:
             patterns: List of BusyTagPattern objects to display (default: [])
             repeat: Integer specifying how many times to repeat the pattern (default: 255)
                    Use 255 for infinite repetition
+
+        Returns:
+            bool: True if the pattern was set successfully, False otherwise
             
         Example:
             >>> patterns = [BusyTagPattern(color="red"), BusyTagPattern(color="blue")]
@@ -492,8 +499,9 @@ class BusyTag:
         resp: list[str] = self.write([b.encode() for b in buf]) # ty: ignore[invalid-assignment]
         if 'OK' not in resp:
             logger.error(resp)
+            return False
 
-        self.playPattern(active=active, repeat=repeat)
+        return self.playPattern(active=active, repeat=repeat)
 
     def getDisplayBrightness(self) -> str:
         """Get the current display brightness setting from the BusyTag device.
@@ -507,7 +515,7 @@ class BusyTag:
         resp: list[str] = self.write([b'AT+DB?\r\n']) # ty: ignore[invalid-assignment]
         return resp[0]
 
-    def setDisplayBrightness(self, brightness: int = 100) -> None:
+    def setDisplayBrightness(self, brightness: int = 100) -> bool:
         """Set the display brightness on the BusyTag device.
         
         This method configures the brightness level of the BusyTag's display.
@@ -518,7 +526,7 @@ class BusyTag:
                       Must be in range 1-100
             
         Returns:
-            None
+            bool: True if the brightness was set successfully, False otherwise
             
         Example:
             >>> tag.setDisplayBrightness(75)
@@ -526,13 +534,15 @@ class BusyTag:
         """
         if brightness < 1 or brightness > 100:
             logger.error("Display Brightness value must be in range 1-100")
-            return
+            return False
 
         # Set Brightness
         buf = f"AT+DB={brightness}\r\n"
         resp: list[str] = self.write([buf.encode()]) # ty: ignore[invalid-assignment]
         if 'OK' not in resp:
             logger.error(resp)
+            return False
+        return True
 
     def getShowAfterDrop(self) -> str:
         """Get the current "Show After Drop" configuration from the BusyTag device.
@@ -550,14 +560,14 @@ class BusyTag:
         resp: list[str] = self.write([b'AT+SAD?\r\n']) # ty: ignore[invalid-assignment]
         return resp[0]
 
-    def setShowAfterDrop(self) -> None:
+    def setShowAfterDrop(self) -> bool:
         """Enable the "Show After Drop" feature on the BusyTag device.
         
         This method enables automatic pattern display when the device is dropped
         or moved.
         
         Returns:
-            None
+            bool: True if the feature was enabled successfully, False otherwise
             
         Example:
             >>> tag.setShowAfterDrop()
@@ -568,15 +578,17 @@ class BusyTag:
         resp: list[str] = self.write([buf.encode()]) # ty: ignore[invalid-assignment]
         if 'OK' not in resp:
             logger.error(resp)
+            return False
+        return True
 
-    def unsetShowAfterDrop(self) -> None:
+    def unsetShowAfterDrop(self) -> bool:
         """Disable the "Show After Drop" feature on the BusyTag device.
         
         This method disables automatic pattern display when the device is dropped
         or moved.
         
         Returns:
-            None
+            bool: True if the feature was disabled successfully, False otherwise
             
         Example:
             >>> tag.unsetShowAfterDrop()
@@ -587,6 +599,8 @@ class BusyTag:
         resp: list[str] = self.write([buf.encode()]) # ty: ignore[invalid-assignment]
         if 'OK' not in resp:
             logger.error(resp)
+            return False
+        return True
 
     def getAllowWebFileServer(self) -> str:
         """Get the current "Allow Web File Server" configuration from the BusyTag device.
@@ -603,13 +617,13 @@ class BusyTag:
         resp: list[str] = self.write([b'AT+AWFS?\r\n']) # ty: ignore[invalid-assignment]
         return resp[0]
 
-    def setAllowWebFileServer(self) -> None:
+    def setAllowWebFileServer(self) -> bool:
         """Enable the "Allow Web File Server" feature on the BusyTag device.
         
         This method enables file access via web server on the BusyTag device.
         
         Returns:
-            None
+            bool: True if the feature was enabled successfully, False otherwise
             
         Example:
             >>> tag.setAllowWebFileServer()
@@ -620,14 +634,16 @@ class BusyTag:
         resp: list[str] = self.write([buf.encode()]) # ty: ignore[invalid-assignment]
         if 'OK' not in resp:
             logger.error(resp)
+            return False
+        return True
 
-    def unsetAllowWebFileServer(self) -> None:
+    def unsetAllowWebFileServer(self) -> bool:
         """Disable the "Allow Web File Server" feature on the BusyTag device.
         
         This method disables file access via web server on the BusyTag device.
         
         Returns:
-            None
+            bool: True if the feature was disabled successfully, False otherwise
             
         Example:
             >>> tag.unsetAllowWebFileServer()
@@ -638,6 +654,8 @@ class BusyTag:
         resp: list[str] = self.write([buf.encode()]) # ty: ignore[invalid-assignment]
         if 'OK' not in resp:
             logger.error(resp)
+            return False
+        return True
 
     def getWifiConfig(self) -> str:
         """Get the current WiFi configuration from the BusyTag device.
@@ -655,7 +673,7 @@ class BusyTag:
         resp: list[str] = self.write([b'AT+WC?\r\n']) # ty: ignore[invalid-assignment]
         return resp[0]
 
-    def setWifiConfig(self, ssid: str, password: str) -> None:
+    def setWifiConfig(self, ssid: str, password: str) -> bool:
         """Set the WiFi configuration on the BusyTag device.
         
         This method configures the WiFi SSID and password for the BusyTag device,
@@ -666,7 +684,7 @@ class BusyTag:
             password: String containing the WiFi network password
             
         Returns:
-            None
+            bool: True if the WiFi configuration was set successfully, False otherwise
             
         Example:
             >>> tag.setWifiConfig("MyWiFi", "mysecurepassword123")
@@ -677,6 +695,8 @@ class BusyTag:
         resp: list[str] = self.write([buf.encode()]) # ty: ignore[invalid-assignment]
         if 'OK' not in resp:
             logger.error(resp)
+            return False
+        return True
 
     def getUsbMassStorage(self) -> str:
         """Get the current USB mass storage configuration from the BusyTag device.
@@ -694,7 +714,7 @@ class BusyTag:
         resp: list[str] = self.write([b'AT+UMSA?\r\n']) # ty: ignore[invalid-assignment]
         return resp[0]
 
-    def setUsbMassStorage(self) -> None:
+    def setUsbMassStorage(self) -> bool:
         """Enable USB mass storage mode on the BusyTag device.
         
         This method enables USB mass storage mode, allowing the BusyTag to appear
@@ -702,7 +722,7 @@ class BusyTag:
         transfer via standard file explorer.
         
         Returns:
-            None
+            bool: True if USB mass storage was enabled successfully, False otherwise
             
         Example:
             >>> tag.setUsbMassStorage()
@@ -713,15 +733,17 @@ class BusyTag:
         resp: list[str] = self.write([buf.encode()]) # ty: ignore[invalid-assignment]
         if 'OK' not in resp:
             logger.error(resp)
+            return False
+        return True
 
-    def unsetUsbMassStorage(self) -> None:
+    def unsetUsbMassStorage(self) -> bool:
         """Disable USB mass storage mode on the BusyTag device.
         
         This method disables USB mass storage mode, preventing the BusyTag from
         appearing as a USB storage device when connected to a computer.
         
         Returns:
-            None
+            bool: True if USB mass storage was disabled successfully, False otherwise
             
         Example:
             >>> tag.unsetUsbMassStorage()
@@ -732,6 +754,8 @@ class BusyTag:
         resp: list[str] = self.write([buf.encode()]) # ty: ignore[invalid-assignment]
         if 'OK' not in resp:
             logger.error(resp)
+            return False
+        return True
 
     def getShowingPicture(self) -> str:
         """Get the currently showing picture filename from the BusyTag device.
@@ -749,7 +773,7 @@ class BusyTag:
         resp: list[str] = self.write([b'AT+SP?\r\n']) # ty: ignore[invalid-assignment]
         return resp[0]
 
-    def setShowingPicture(self, filename: str) -> None:
+    def setShowingPicture(self, filename: str) -> bool:
         """Set the picture to be shown on the BusyTag device.
         
         This method configures the BusyTag to display a specific picture file
@@ -759,7 +783,7 @@ class BusyTag:
             filename: String containing the name of the picture file to display
             
         Returns:
-            None
+            bool: True if the picture was set successfully, False otherwise
             
         Example:
             >>> tag.setShowingPicture("image.jpg")
@@ -770,6 +794,8 @@ class BusyTag:
         resp: list[str] = self.write([buf.encode()]) # ty: ignore[invalid-assignment]
         if 'OK' not in resp:
             logger.error(resp)
+            return False
+        return True
 
     def getAutoStorageScan(self) -> str:
         """Get the current auto storage scan configuration from the BusyTag device.
@@ -787,14 +813,14 @@ class BusyTag:
         resp: list[str] = self.write([b'AT+AASS?\r\n']) # ty: ignore[invalid-assignment]
         return resp[0]
 
-    def setAutoStorageScan(self) -> None:
+    def setAutoStorageScan(self) -> bool:
         """Enable auto storage scan on the BusyTag device.
         
         This method enables automatic storage device scanning, allowing it to detect
         new files automatically.
         
         Returns:
-            None
+            bool: True if auto storage scan was enabled successfully, False otherwise
             
         Example:
             >>> tag.setAutoStorageScan()
@@ -805,14 +831,16 @@ class BusyTag:
         resp: list[str] = self.write([buf.encode()]) # ty: ignore[invalid-assignment]
         if 'OK' not in resp:
             logger.error(resp)
+            return False
+        return True
 
-    def unsetAutoStorageScan(self) -> None:
+    def unsetAutoStorageScan(self) -> bool:
         """Disable auto storage scan on the BusyTag device.
         
         This method disables automatic storage device scanning.
         
         Returns:
-            None
+            bool: True if auto storage scan was disabled successfully, False otherwise
             
         Example:
             >>> tag.unsetAutoStorageScan()
@@ -823,10 +851,12 @@ class BusyTag:
         resp: list[str] = self.write([buf.encode()]) # ty: ignore[invalid-assignment]
         if 'OK' not in resp:
             logger.error(resp)
+            return False
+        return True
 
     # Actions
 
-    def playPattern(self, active: bool = True, repeat: int = 255) -> None:
+    def playPattern(self, active: bool = True, repeat: int = 255) -> bool:
         """Play or stop the current pattern on the BusyTag device.
         
         This method controls whether the currently configured pattern should be 
@@ -840,7 +870,7 @@ class BusyTag:
                    Use 255 for infinite repetition
            
         Returns:
-            None
+            bool: True if the pattern playback was started/stopped successfully, False otherwise
            
         Note:
             - The pattern to be played must be configured separately (e.g., via setCustomPattern)
@@ -859,6 +889,8 @@ class BusyTag:
         resp: list[str] = self.write([buf.encode()]) # ty: ignore[invalid-assignment]
         if 'OK' not in resp:
             logger.error(resp)
+            return False
+        return True
 
     def getFile(self, filename: str, output_file: str | None = None) -> bytes | None:
         """Retrieve a file from the BusyTag device.
@@ -891,7 +923,7 @@ class BusyTag:
         else:
             return b"".join(resp[2:-1])
 
-    def putFile(self, filepath: str) -> None:
+    def putFile(self, filepath: str) -> bool:
         """Upload a file to the BusyTag device.
         
         This method uploads a local file to the BusyTag device's storage.
@@ -902,7 +934,7 @@ class BusyTag:
             filepath: String containing the local path to the file to upload
             
         Returns:
-            None
+            bool: True if the file was uploaded successfully, False otherwise
             
         Note:
             - The file is uploaded using the AT+UF command
@@ -923,8 +955,10 @@ class BusyTag:
         
         if 'OK' not in resp:
             logger.error(resp)
+            return False
+        return True
 
-    def deleteFile(self, filename: str) -> None:
+    def deleteFile(self, filename: str) -> bool:
         """Delete a file from the BusyTag device.
         
         This method removes a file from the BusyTag device's storage.
@@ -934,7 +968,7 @@ class BusyTag:
             filename: String containing the name of the file to delete from the device
             
         Returns:
-            None
+            bool: True if the file was deleted successfully, False otherwise
             
         Note:
             - The file is deleted using the AT+DF command
@@ -950,15 +984,17 @@ class BusyTag:
         resp: list[str] = self.write([buf.encode()]) # ty: ignore[invalid-assignment]
         if 'OK' not in resp:
             logger.error(resp)
+            return False
+        return True
 
-    def restart(self) -> None:
+    def restart(self) -> bool:
         """Restart the BusyTag device.
         
         This method sends a restart command to the BusyTag device, causing it to
         reboot. The device will be unavailable during the restart process.
         
         Returns:
-            None
+            bool: True if the device was restarted successfully, False otherwise
             
         Note:
             - The device will reboot and reconnect
@@ -974,15 +1010,17 @@ class BusyTag:
         resp: list[str] = self.write([buf]) # ty: ignore[invalid-assignment]
         if 'OK' not in resp:
             logger.error(resp)
+            return False
+        return True
 
-    def formatDeviceStorage(self) -> None:
+    def formatDeviceStorage(self) -> bool:
         """Format the storage on the BusyTag device.
         
         This method sends a command to format the internal storage of the BusyTag device.
         All files and configurations will be erased. Use with caution.
         
         Returns:
-            None
+            bool: True if the storage was formatted successfully, False otherwise
             
         Note:
             - All files and configurations will be permanently deleted
@@ -998,15 +1036,17 @@ class BusyTag:
         resp: list[str] = self.write([buf]) # ty: ignore[invalid-assignment]
         if 'OK' not in resp:
             logger.error(resp)
+            return False
+        return True
 
-    def activateFileStorageScan(self) -> None:
+    def activateFileStorageScan(self) -> bool:
         """Activate file storage scan on the BusyTag device.
         
         This method triggers a manual scan of the device's storage to detect and
         register any new files that have been added.
         
         Returns:
-            None
+            bool: True if the file storage scan was activated successfully, False otherwise
             
         Note:
             - Useful after manually adding files via USB mass storage
@@ -1022,8 +1062,10 @@ class BusyTag:
         resp: list[str] = self.write([buf]) # ty: ignore[invalid-assignment]
         if 'OK' not in resp:
             logger.error(resp)
+            return False
+        return True
 
-    def factoryResetMainConfig(self) -> None:
+    def factoryResetMainConfig(self) -> bool:
         """Reset the main configuration to factory defaults.
         
         This method resets all main configuration settings (LED patterns, brightness,
@@ -1031,7 +1073,7 @@ class BusyTag:
         are not affected.
         
         Returns:
-            None
+            bool: True if the main configuration was reset successfully, False otherwise
             
         Note:
             - Only main configuration settings are reset
@@ -1048,15 +1090,17 @@ class BusyTag:
         resp: list[str] = self.write([buf]) # ty: ignore[invalid-assignment]
         if 'OK' not in resp:
             logger.error(resp)
+            return False
+        return True
 
-    def factoryResetWifiConfig(self) -> None:
+    def factoryResetWifiConfig(self) -> bool:
         """Reset the WiFi configuration to factory defaults.
         
         This method resets the WiFi SSID and password to their factory default values.
         Main configuration and file storage settings are not affected.
         
         Returns:
-            None
+            bool: True if the WiFi configuration was reset successfully, False otherwise
             
         Note:
             - Only WiFi configuration settings are reset
@@ -1073,15 +1117,17 @@ class BusyTag:
         resp: list[str] = self.write([buf]) # ty: ignore[invalid-assignment]
         if 'OK' not in resp:
             logger.error(resp)
+            return False
+        return True
 
-    def factoryResetDefaultImage(self) -> None:
+    def factoryResetDefaultImage(self) -> bool:
         """Reset the default image to factory defaults.
         
         This method resets the default image displayed on the BusyTag device to
         the factory default image. All other configurations remain unchanged.
         
         Returns:
-            None
+            bool: True if the default image was reset successfully, False otherwise
             
         Note:
             - Only the default image is reset
@@ -1098,6 +1144,8 @@ class BusyTag:
         resp: list[str] = self.write([buf]) # ty: ignore[invalid-assignment]
         if 'OK' not in resp:
             logger.error(resp)
+            return False
+        return True
 
 class BusyTagPattern:
     def __init__(self, leds: List[BusyTag.LEDS] = [BusyTag.LEDS.ALL], color: str = "FFFFFF", scale: float = 1.0, speed: int = 100, delay: int = 0):
