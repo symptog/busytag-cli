@@ -262,6 +262,29 @@ options:
 uv run main.py --device /dev/ttyACM0 raw "AT+GDN"
 ```
 
+### Apply Preset Configuration
+
+Apply a preset configuration from a YAML file to your BusyTag device. This allows you to batch multiple configurations together.
+
+```bash
+uv run main.py --device /dev/ttyACM0 preset --help
+usage: main.py preset [-h] preset_file
+
+positional arguments:
+  preset_file           Path to preset configuration file
+
+options:
+  -h, --help            show this help message and exit
+```
+
+##### Example
+
+```bash
+uv run main.py --device /dev/ttyACM0 preset my_preset.yaml
+```
+
+See [PRESET_README.md](PRESET_README.md) for detailed documentation on the preset configuration file format and available options.
+
 ## API
 
 The `BusyTag` class implements most AT commands as definded in this documentation:

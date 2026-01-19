@@ -1,0 +1,39 @@
+# Example preset
+
+# Local Image location, will be uploaded
+image: ./image.jpg
+
+# Set LED Colors
+solid_colors:
+  - color: "FF0000"
+    leds:
+      - LEFT
+    dim: 1.0
+  - color: "0000FF"
+    leds:
+      - RIGHT
+    dim: 1.0
+    reset: False
+
+# Set LED Pattern
+# Use either predefined pattern or create own ones 
+pattern:
+  - RED_FLASHES
+  - YELLOW_PULSES
+  - GREEN_FLASHES
+  - color: "red"
+    leds:
+      - 127
+      - LEFT
+    speed: 10
+    delay: 150
+  - color: "blue"
+    leds:
+      - 127
+      - RIGHT
+    speed: 10
+    delay: 150
+
+# Number of times Pattern will be repeated
+# infinity if not defined
+repeat: 5

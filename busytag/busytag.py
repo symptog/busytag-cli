@@ -29,8 +29,8 @@ class BusyTag:
         LED6 = 0b01000000  # 64
 
         # Left Right Pattern
-        RIGHT = 0b01111000  # 120
-        LEFT  = 0b00001111  # 15
+        RIGHT = 0b01110000  # 120
+        LEFT  = 0b00000111  # 15
 
         # Running Pattern
         RUN0  = 0b10000001  # 129
@@ -131,7 +131,7 @@ class BusyTag:
             d = d.split(':')[1]
         return d
 
-    def __getLedsFromInt(self, led_num) -> List[LEDS]:
+    def __getLedsFromInt(self, led_num) -> List[int]:
         """Convert LED bitmask to list of LED enums.
         
         This internal method converts an integer bitmask representing LED positions
@@ -417,7 +417,7 @@ class BusyTag:
         resp: list[str] = self.write([b'AT+SC?\r\n']) # ty: ignore[invalid-assignment]
         return resp[0]
 
-    def setSolidColor(self, color: str = "red", scale: float = 1.0, leds: List[LEDS] = [LEDS.ALL], clear: bool = True) -> bool:
+    def setSolidColor(self, color: str = "red", scale: float = 1.0, leds: List[int] = [LEDS.ALL], clear: bool = True) -> bool:
         """Set a solid color on the BusyTag device.
         
         This method configures the BusyTag to display a solid color on specified LEDs.
@@ -440,7 +440,7 @@ class BusyTag:
             resp: list[str] = self.write([buf.encode()]) # ty: ignore[invalid-assignment]
             if 'OK' not in resp:
                 logger.error(resp)
-            return False
+                return False
 
         # Set Color
         buf = f"AT+SC={sum(leds)},{c[0]:02x}{c[1]:02x}{c[2]:02x}\r\n"
@@ -1148,7 +1148,7 @@ class BusyTag:
         return True
 
 class BusyTagPattern:
-    def __init__(self, leds: List[BusyTag.LEDS] = [BusyTag.LEDS.ALL], color: str = "FFFFFF", scale: float = 1.0, speed: int = 100, delay: int = 0):
+    def __init__(self, leds: List[int] = [BusyTag.LEDS.ALL], color: str = "FFFFFF", scale: float = 1.0, speed: int = 100, delay: int = 0):
         self.color = parse_color_string(color, scale=scale)
         self.scale = scale
         self.leds = leds
@@ -1157,6 +1157,9 @@ class BusyTagPattern:
     
     def __str__(self):
         return f"{sum(self.leds)},{self.color[0]:02x}{self.color[1]:02x}{self.color[2]:02x},{self.speed},{self.delay}"
+
+    def __repr__(self):
+        return self.__str__()
 
 
 class BusyTagDefaultPattern(Enum):
