@@ -28,8 +28,8 @@ jobs:
       - name: Build CLI binary
         run: uv run pyinstaller --clean --noconfirm busytag-cli.spec
 
-      - name: Build GUI binary
-        run: uv run pyinstaller --clean --noconfirm busytag-gui.spec
+      #- name: Build GUI binary
+      #  run: uv run pyinstaller --clean --noconfirm busytag-gui.spec
 
       - name: Upload CLI artifact
         uses: actions/upload-artifact@v4
@@ -37,7 +37,7 @@ jobs:
           name: busytag-cli-linux
           path: |
             dist/busytag-cli
-            dist/busytag-gui
+          # dist/busytag-gui
           retention-days: 30
 
   release:
