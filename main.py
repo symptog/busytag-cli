@@ -7,6 +7,7 @@ import sys
 import os
 import yaml
 import json
+from urllib.parse import urlparse, parse_qs
 
 import logging
 logger = logging.getLogger(__name__)
@@ -33,6 +34,7 @@ def picture_command(args, bt):
                 kb_size = p["size"]/1024
                 print(f"{p["name"]} ({kb_size:.2f} kB)")
     elif args.pcommand == "upload":
+        bt.mount()
         bt.putFile(args.filename)
         fname = os.path.basename(args.filename)
         if args.use:
@@ -70,6 +72,7 @@ def led_pattern_command(args, bt):
                 print(p.name)
     elif args.lpcommand == "off":
         bt.playPattern(0,0)
+    
 def raw_command(args, bt):
     logger.debug(args)
     result = bt.write([f"{args.command}\r\n".encode()])
@@ -78,7 +81,6 @@ def raw_command(args, bt):
     else:
         print(result)
     
-
 def preset_command(args, bt):
     logger.debug(args)
     
@@ -97,6 +99,7 @@ def preset_command(args, bt):
     if 'image' in config:
         image_path = config['image']
         if os.path.exists(image_path):
+            bt.mount()
             bt.putFile(image_path)
             fname = os.path.basename(image_path)
             bt.setShowingPicture(fname)
@@ -189,6 +192,43 @@ def preset_command(args, bt):
     
     print("Configuration applied successfully!")
 
+def uri_command(args, bt):
+    uri = urlparse(args.uri)
+
+    if uri.scheme != "busytag":
+        print("Wrong URI scheme. Required URI like busytag://...")
+        return
+    
+    qs =  parse_qs(uri.query)
+
+    filename = os.path.basename(uri.path)
+    color = qs.get("color", ["blue"])[0].replace("#", "").lower()
+    pattern_str = qs.get("pattern", [None])[0]
+    pattern_repeat = qs.get("repeat", [255])[0]
+    pattern = None
+
+    if pattern_str:
+        pattern = BusyTagDefaultPattern[pattern_str.upper()].value
+    
+    # ParseResult(
+    #     scheme='busytag',
+    #     netloc='igapi.busy-tag.com',
+    #     path='/uploads/5d/5d6685e996b62d6cc2d3159c99627f6cc598a26833d35636571e41cb6fbc6ce1.png',
+    #     params='',
+    #     query='color=%23FFA500&original_ext=.png',
+    #     fragment=''
+    # )
+    if len(filename) > 25:
+        filename = filename[-25:]
+
+    bt.mount()
+    bt.putFileFromUrl(url=f"https://{uri.netloc}{uri.path}", filename=filename)    
+    bt.setShowingPicture(filename)
+    bt.setSolidColor(color=color, clear=True)
+    if pattern:
+        bt.setCustomPattern(pattern, repeat=pattern_repeat)
+    else:
+        bt.playPattern(False)
 
 def main():
     import argparse
@@ -257,6 +297,12 @@ def main():
     preset = subparsers.add_parser('preset', help="Apply preset configuration from file")
     preset.add_argument("preset_file", type=str, help="Path to preset configuration file")
     preset.set_defaults(func=preset_command)
+
+    # URI Handler
+    # see https://ig.busy-tag.com/ig/
+    uri = subparsers.add_parser('uri', help="Busytag URI Handler")
+    uri.add_argument("uri", type=str, help="Busytag URI")
+    uri.set_defaults(func=uri_command)
 
     args = parser.parse_args()
 

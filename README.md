@@ -262,6 +262,72 @@ options:
 uv run main.py --device /dev/ttyACM0 raw "AT+GDN"
 ```
 
+### URI Handler
+
+Download a file from a URL and apply it to the BusyTag device with optional LED color and pattern configuration.
+
+```bash
+uv run main.py --device /dev/ttyACM0 uri --help
+usage: main.py uri [-h] uri
+
+positional arguments:
+  uri                  Busytag URI
+
+options:
+  -h, --help           show this help message and exit
+```
+
+##### URI Format
+
+The URI must start with `busytag://` and include the following components:
+
+- **scheme**: `busytag://` (required)
+- **location**: The hostname of the server (e.g., `igapi.busy-tag.com`)
+- **image path**: The path to the file on the server (e.g., `/uploads/.../image.png`)
+- **query parameters** (optional):
+  - `color`: LED color in hex or named format (default: `blue`)
+  - `pattern`: Pattern name (e.g., `RED_FLASHES`, `DEFAULT`)
+  - `repeat`: Number of times to repeat the pattern (default: `255`)
+
+##### Example URIs
+
+```bash
+# With custom color (orange)
+uv run main.py --device /dev/ttyACM0 uri "busytag://my-server.com/path/to/my/image.png?color=FFA500"
+
+# With pattern and repeat
+uv run main.py --device /dev/ttyACM0 uri "busytag://my-server.com/path/to/my/image.png?color=FFA500&pattern=RED_FLASHES&repeat=5"
+```
+
+##### How It Works
+
+1. Downloads the file from the specified URL
+2. Uploads the file to the BusyTag device
+3. Sets the uploaded file as the background picture
+4. Sets the specified LED color
+5. Applies the specified pattern (if provided)
+
+##### Register Handler
+
+Create a `busytag.desktop` file within `.local/share/applications/`
+
+```
+[Desktop Entry]
+Type=Application
+Name=Busy-Tag Scheme Handler
+Exec=uv run main.py --device /dev/ttyACM0 uri %u
+StartupNotify=true
+MimeType=x-scheme-handler/busytag;
+# Enable Terminal for Debugging
+Terminal=false
+```
+
+Register the handler:
+
+```bash
+gio mime x-scheme-handler/busytag busytag.desktop
+```
+
 ### Apply Preset Configuration
 
 Apply a preset configuration from a YAML file to your BusyTag device. This allows you to batch multiple configurations together.

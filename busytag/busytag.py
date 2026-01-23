@@ -7,6 +7,10 @@ from enum import IntEnum, Enum
 import serial
 import os
 import logging
+import requests
+import psutil
+import time
+
 logger = logging.getLogger(__name__)
 serial_logger = logging.getLogger(f"{__name__}.serial")
 
@@ -17,6 +21,8 @@ class BusyTag:
     This class provides methods to control various aspects of the BusyTag device,
     including LED patterns, device configuration, file management, and more.
     """
+
+    __SYS_BLOCK_DEVICES = '/sys/class/block'
 
     class LEDS(IntEnum):
         ALL  = 0b01111111  # 127
@@ -91,6 +97,58 @@ class BusyTag:
         self.timeout = timeout
         self.keep_serial = keep_serial
         self.ser = None
+        self.mount_path = None
+
+    def mount(self):
+        """Mount the BusyTag storage device and prepare it for file operations.
+        
+        This method attempts to mount the BusyTag device's storage by:
+        - Checking if the device is already mounted (returns True immediately)
+        - Enabling USB mass storage mode if disabled
+        - Enabling auto storage scan if disabled
+        - Scanning /sys/class/block for devices with "busytag" vendor
+        - Checking mounted partitions to find the BusyTag device
+        
+        Args:
+            None
+        
+        Returns:
+            bool: True if the device was successfully mounted, False otherwise
+        
+        Note:
+            - The method sets `self.mount_path` to the mount point if found
+            - If the device is already mounted, no action is taken
+            - Error responses are logged if USB mass storage or auto scan fails
+        
+        Example:
+            >>> tag = BusyTag('/dev/ttyUSB0')
+            >>> if tag.mount():
+            ...     print(f"Device mounted at {tag.mount_path}")
+        """
+        if self.mount_path:
+            return True
+
+        if self.getUsbMassStorage() == "0":
+            self.setUsbMassStorage()
+        
+        if self.getAutoStorageScan() == "0":
+            self.setAutoStorageScan()
+
+        for dev in os.listdir(self.__SYS_BLOCK_DEVICES):
+            vendorpath = os.path.join(self.__SYS_BLOCK_DEVICES, dev, 'device', 'vendor')
+            if not os.path.exists(vendorpath):
+                continue
+            with open(vendorpath) as f:
+                vendor = f.read().strip()
+
+            if "busytag" == vendor.lower():
+                for part in psutil.disk_partitions():
+                    if f"/dev/{dev}" == part.device:
+                        self.mount_path = part.mountpoint
+                        logger.info(f"Found Busytag storage device mounted at {self.mount_path}")
+                        return True
+        
+        return False
 
     def __clean_data(self, data: bytes, binary: bool) -> str | bytes | None: 
         """Clean and parse serial data from the BusyTag device.
@@ -158,7 +216,7 @@ class BusyTag:
                 leds.append(self.LEDS(2**i))
         return leds
 
-    def write(self, data: list[bytes], binary=False) -> List[str] | List[bytes]:
+    def write(self, data: list[bytes], binary=False, expect_reset: bool = False) -> List[str] | List[bytes]:
         """Write data to the BusyTag device and read responses.
         
         This method handles serial communication with the BusyTag device, sending
@@ -191,10 +249,12 @@ class BusyTag:
             for b in data:
                 serial_logger.debug(f"Write data {b} to {self.device}")
                 self.ser.write(b)
-                raw_resp: list[bytes] = self.ser.readlines()
-                serial_logger.debug(raw_resp)
-                logger.debug(raw_resp)
-                response.extend(filter(None, [self.__clean_data(x, binary) for x in raw_resp]))
+                if not expect_reset:
+                    raw_resp: list[bytes] = self.ser.readlines()
+                    serial_logger.debug(raw_resp)
+                    response.extend(filter(None, [self.__clean_data(x, binary) for x in raw_resp]))
+                else:
+                    response.append("OK")
                 #response.append(ser.readlines())
             if not self.keep_serial:
                 self.ser.close()
@@ -730,7 +790,7 @@ class BusyTag:
         """
         # AT+UMSA={0,1}
         buf = "AT+UMSA=1\r\n"
-        resp: list[str] = self.write([buf.encode()]) # ty: ignore[invalid-assignment]
+        resp: list[str] = self.write([buf.encode()], expect_reset=True) # ty: ignore[invalid-assignment]
         if 'OK' not in resp:
             logger.error(resp)
             return False
@@ -751,7 +811,7 @@ class BusyTag:
         """
         # AT+UMSA={0,1}
         buf = "AT+UMSA=0\r\n"
-        resp: list[str] = self.write([buf.encode()]) # ty: ignore[invalid-assignment]
+        resp: list[str] = self.write([buf.encode()], expect_reset=True) # ty: ignore[invalid-assignment]
         if 'OK' not in resp:
             logger.error(resp)
             return False
@@ -923,7 +983,7 @@ class BusyTag:
         else:
             return b"".join(resp[2:-1])
 
-    def putFile(self, filepath: str) -> bool:
+    def putFile(self, filepath: str, override: bool =  False) -> bool:
         """Upload a file to the BusyTag device.
         
         This method uploads a local file to the BusyTag device's storage.
@@ -948,14 +1008,107 @@ class BusyTag:
         # AT+UF=filename,size
         size = os.path.getsize(filepath)
         basename = os.path.basename(filepath)
+
+        if len(basename) > 30:
+            logger.error("Filename to long.")
+            return False
+
+        pl = self.getPictureList()
+        if basename in [p["name"] for p in pl] and not override:
+            logger.info(f"{basename} exists. Not Uploading.")
+            return True
+
+        if self.mount_path:
+            with open(filepath, "rb") as src_file:
+                dst_path = os.path.join(self.mount_path, basename)
+                with open(dst_path, "wb") as dst_file:
+                    dst_file.write(src_file.read())
+                    os.fsync(dst_file)
+            time.sleep(5)
+            return True
+
         buf = [f"AT+UF={basename},{size}\r\n".encode()]
         with open(filepath, "rb") as f:
-            buf.append(f.read())
+            buf.append(f.read())        
+
         resp: list[str] = self.write(buf) # ty: ignore[invalid-assignment]
         
         if 'OK' not in resp:
             logger.error(resp)
             return False
+        return True
+
+    def putFileFromUrl(self, url: str, filename: str | None = None, override: bool = False) -> bool:
+        """Upload a file from a URL to the BusyTag device.
+        
+        This method downloads a file from the specified URL and uploads it to the
+        BusyTag device's storage. The file is sent with its basename and size,
+        allowing the device to store and manage it properly.
+        
+        Args:
+            url: String containing the URL to download the file from
+            filename: Optional string containing the filename to use on the device.
+                     If None, the filename is extracted from the URL path.
+            
+        Returns:
+            bool: True if the file was downloaded and uploaded successfully, False otherwise
+            
+        Note:
+            - The file is uploaded using the AT+UF command
+            - Error responses are logged if the upload fails
+            - Only the basename of the file is used on the device
+            
+        Example:
+            >>> tag.putFileFromUrl("https://example.com/image.jpg")
+            # Downloads image.jpg from the URL and uploads it to the BusyTag device
+            >>> tag.putFileFromUrl("https://example.com/data.bin", "custom.bin")
+            # Downloads data.bin from the URL and uploads it as custom.bin
+        """
+        
+        try:
+            # Download the file from the URL
+            logger.debug(f"Getting file from url: {url}")
+            response = requests.get(url, stream=True)
+            response.raise_for_status()
+            file_data = response.content
+            
+            # Determine the filename
+            if filename is None:
+                filename = os.path.basename(url)
+            
+            if len(filename) > 30:
+                logger.error("Filename to long.")
+                return False
+            
+            pl = self.getPictureList()
+            if filename in [p["name"] for p in pl] and not override:
+                logger.info(f"{filename} exists. Not Uploading.")
+                return True
+
+            if self.mount_path:
+                with open(os.path.join(self.mount_path, filename), "wb") as dst_file:
+                    dst_file.write(file_data)
+                    os.fsync(dst_file)
+                time.sleep(5)
+                
+            else:
+                # Upload the file to the BusyTag device
+                size = len(file_data)
+                buf = [f"AT+UF={filename},{size}\r\n".encode()]
+                buf.append(file_data)
+                resp: list[str] = self.write(buf) # ty: ignore[invalid-assignment]
+                
+                if 'OK' not in resp:
+                    logger.error(resp)
+                    return False
+            
+        except requests.RequestException as e:
+            logger.error(f"Failed to download file from URL: {e}")
+            return False
+        except Exception as e:
+            logger.error(f"Failed to upload file from URL: {e}")
+            return False
+
         return True
 
     def deleteFile(self, filename: str) -> bool:
@@ -1007,7 +1160,7 @@ class BusyTag:
         """
         # AT+RST
         buf = b"AT+RST\r\n"
-        resp: list[str] = self.write([buf]) # ty: ignore[invalid-assignment]
+        resp: list[str] = self.write([buf], expect_reset=True) # ty: ignore[invalid-assignment]
         if 'OK' not in resp:
             logger.error(resp)
             return False
