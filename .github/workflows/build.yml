@@ -36,6 +36,7 @@ jobs:
         with:
           name: busytag-cli-linux
           path: |
+            busytag.desktop
             dist/busytag-cli
           # dist/busytag-gui
           retention-days: 30

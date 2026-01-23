@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=BusyTag Scheme Handler
+Exec=busytag-cli --device /dev/ttyACM0 uri %u
+StartupNotify=true
+MimeType=x-scheme-handler/busytag;
+# Enable Terminal for Debugging
+Terminal=false

@@ -314,7 +314,7 @@ Create a `busytag.desktop` file within `.local/share/applications/`
 ```
 [Desktop Entry]
 Type=Application
-Name=Busy-Tag Scheme Handler
+Name=BusyTag Scheme Handler
 Exec=uv run main.py --device /dev/ttyACM0 uri %u
 StartupNotify=true
 MimeType=x-scheme-handler/busytag;
