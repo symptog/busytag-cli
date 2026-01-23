@@ -5,7 +5,16 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "psutil>=7.2.1",
     "pyserial>=3.5",
+    "pyyaml>=6.0.3",
+    "requests>=2.32.5",
     "ttkbootstrap>=1.20.0",
     "webcolors>=25.10.0",
 ]
+
+[dependency-groups]
+build = [
+    "pyinstaller>=6.18.0",
+]
+
