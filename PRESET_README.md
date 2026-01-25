@@ -5,7 +5,7 @@ The `config` command allows you to apply a batch of configurations from a YAML f
 ## Usage
 
 ```bash
-uv run main.py --device /dev/ttyUSB0 preset preset.yaml
+busytag-cli --device /dev/ttyUSB0 preset preset.yaml
 ```
 
 ## Configuration File Format

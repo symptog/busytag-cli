@@ -6,15 +6,12 @@ This repository provides a Python based CLI util and library to communicate with
 
 ## Usage
 
+Download latest cli and gui from releases.
+
 ### Command Line Interface
 
-```bash
-uv sync
-uv run main.py
 ```
-
-```
-usage: main.py [-h] [--debug] --device DEVICE [--json] {show,pictures,led,led-pattern,raw} ...
+usage: busytag-cli [-h] [--debug] --device DEVICE [--json] {show,pictures,led,led-pattern,raw} ...
 
 positional arguments:
   {show,pictures,led,led-pattern,raw}
@@ -34,7 +31,7 @@ options:
 ### Graphical User Interface (Alpha)
 
 ```bash
-uv run gui.py
+busytag-gui
 ```
 
 See [GUI_README.md](GUI_README.md) for more information about the GUI.
@@ -44,7 +41,7 @@ See [GUI_README.md](GUI_README.md) for more information about the GUI.
 Get device information.
 
 ```bash
-uv run main.py --device /dev/ttyACM0 show 
+busytag-cli --device /dev/ttyACM0 show 
 ID: 34B7DA612B1C
 Name: busytag-612B1C
 Manufacture: GREYNUT LTD
@@ -52,15 +49,15 @@ Firmware: 1.0
 ```
 
 ```bash
-uv run main.py --device /dev/ttyACM0 --json show
+busytag-cli --device /dev/ttyACM0 --json show
 {"id": "34B7DA612B1C", "name": "busytag-612B1C", "manufacture": "GREYNUT LTD", "firmware_version": "1.0"}
 ```
 
 ### Interact with LEDs
 
 ```bash
-uv run main.py --device /dev/ttyACM0 led --help
-usage: main.py led [-h] {on,off} ...
+busytag-cli --device /dev/ttyACM0 led --help
+usage: busytag-cli led [-h] {on,off} ...
 
 positional arguments:
   {on,off}
@@ -76,8 +73,8 @@ options:
 Set all or some leds on with the definded color. Optionally reset all leds before changing the color.
 
 ```bash
-uv run main.py --device /dev/ttyACM0 led on --help    
-usage: main.py led on [-h] [--dim DIM] [--reset] [--led {all,0,1,2,3,4,5,6} [{all,0,1,2,3,4,5,6} ...]] color
+busytag-cli --device /dev/ttyACM0 led on --help    
+usage: busytag-cli led on [-h] [--dim DIM] [--reset] [--led {all,0,1,2,3,4,5,6} [{all,0,1,2,3,4,5,6} ...]] color
 
 positional arguments:
   color                 Color Value
@@ -93,7 +90,7 @@ options:
 ##### Example
 
 ```bash
-uv run main.py --debug --device /dev/ttyACM0 led on yellow --reset --led 0 2 4 6 --dim 0.1
+busytag-cli --debug --device /dev/ttyACM0 led on yellow --reset --led 0 2 4 6 --dim 0.1
 ```
 
 
@@ -102,14 +99,14 @@ uv run main.py --debug --device /dev/ttyACM0 led on yellow --reset --led 0 2 4 6
 Turn all leds off.
 
 ```
-uv run main.py --device /dev/ttyACM0 led off
+busytag-cli --device /dev/ttyACM0 led off
 ```
 
 #### LED Pattern
 
 ```bash
-uv run main.py --device /dev/ttyACM0 led-pattern --help
-usage: main.py led-pattern [-h] {on,off} ...
+busytag-cli --device /dev/ttyACM0 led-pattern --help
+usage: busytag-cli led-pattern [-h] {on,off} ...
 
 positional arguments:
   {on,off}
@@ -121,8 +118,8 @@ options:
 ```
 
 ```bash
-uv run main.py --device /dev/ttyACM0 led-pattern on --help
-usage: main.py led-pattern on [-h] [--repeat REPEAT] pattern
+busytag-cli --device /dev/ttyACM0 led-pattern on --help
+usage: busytag-cli led-pattern on [-h] [--repeat REPEAT] pattern
 
 positional arguments:
   pattern          Pattern Name
@@ -135,7 +132,7 @@ options:
 ##### Example
 
 ```bash
-uv run main.py --device /dev/ttyACM0 led-pattern on DEFAULT --repeat 5
+busytag-cli --device /dev/ttyACM0 led-pattern on DEFAULT --repeat 5
 ```
 
 #### Available Pattern
@@ -170,8 +167,8 @@ WHITE_RUNNING
 ### Interacting with Pictures
 
 ```bash
-uv run main.py --device /dev/ttyACM0 pictures --help
-usage: main.py pictures [-h] {list,upload,display,delete} ...
+busytag-cli --device /dev/ttyACM0 pictures --help
+usage: busytag-cli pictures [-h] {list,upload,display,delete} ...
 
 positional arguments:
   {list,upload,display,delete}
@@ -190,13 +187,13 @@ List all pictures that are available on the device.
 
 
 ```bash
-uv run main.py --device /dev/ttyACM0 pictures list 
+busytag-cli --device /dev/ttyACM0 pictures list 
 def.png (15.84 kB)
 fry.gif (14.32 kB)
 ```
 
 ```bash
-uv run main.py --device /dev/ttyACM0 --json pictures list
+busytag-cli --device /dev/ttyACM0 --json pictures list
 [{"name": "def.png", "size": 16224}, {"name": "fry.gif", "size": 14665}]
 ```
 
@@ -207,8 +204,8 @@ Upload a picture to the device. Optionaly set it as a background once uploaded.
 Pictures must be of size 240x280px
 
 ```bash
-uv run main.py --device /dev/ttyACM0 pictures upload --help
-usage: main.py pictures upload [-h] [--use] filename
+busytag-cli --device /dev/ttyACM0 pictures upload --help
+usage: busytag-cli pictures upload [-h] [--use] filename
 
 positional arguments:
   filename    Path to file for upload
@@ -221,7 +218,7 @@ options:
 ##### Example
 
 ```bash
-uv run main.py --device /dev/ttyACM0 pictures upload --use ./fry.gif
+busytag-cli --device /dev/ttyACM0 pictures upload --use ./fry.gif
 ```
 
 #### Display Picture
@@ -229,7 +226,7 @@ uv run main.py --device /dev/ttyACM0 pictures upload --use ./fry.gif
 Set a picture as background on the device. Picture must already be present.
 
 ```bash
-uv run main.py --device /dev/ttyACM0 pictures display fry.gif
+busytag-cli --device /dev/ttyACM0 pictures display fry.gif
 ```
 
 #### Delete Picture
@@ -237,7 +234,7 @@ uv run main.py --device /dev/ttyACM0 pictures display fry.gif
 Delete picture from device.
 
 ```bash
-uv run main.py --device /dev/ttyACM0 pictures delete fry.gif
+busytag-cli --device /dev/ttyACM0 pictures delete fry.gif
 ```
 
 ### Raw Command
@@ -245,8 +242,8 @@ uv run main.py --device /dev/ttyACM0 pictures delete fry.gif
 Send raw AT commands to the device.
 
 ```bash
-uv run main.py --device /dev/ttyACM0 raw --help
-usage: main.py raw [-h] [--json] command
+busytag-cli --device /dev/ttyACM0 raw --help
+usage: busytag-cli raw [-h] [--json] command
 
 positional arguments:
   command              Command to send
@@ -259,7 +256,7 @@ options:
 ##### Example
 
 ```bash
-uv run main.py --device /dev/ttyACM0 raw "AT+GDN"
+busytag-cli --device /dev/ttyACM0 raw "AT+GDN"
 ```
 
 ### URI Handler
@@ -267,8 +264,8 @@ uv run main.py --device /dev/ttyACM0 raw "AT+GDN"
 Download a file from a URL and apply it to the BusyTag device with optional LED color and pattern configuration.
 
 ```bash
-uv run main.py --device /dev/ttyACM0 uri --help
-usage: main.py uri [-h] uri
+busytag-cli --device /dev/ttyACM0 uri --help
+usage: busytag-cli uri [-h] uri
 
 positional arguments:
   uri                  Busytag URI
@@ -293,10 +290,10 @@ The URI must start with `busytag://` and include the following components:
 
 ```bash
 # With custom color (orange)
-uv run main.py --device /dev/ttyACM0 uri "busytag://my-server.com/path/to/my/image.png?color=FFA500"
+busytag-cli --device /dev/ttyACM0 uri "busytag://my-server.com/path/to/my/image.png?color=FFA500"
 
 # With pattern and repeat
-uv run main.py --device /dev/ttyACM0 uri "busytag://my-server.com/path/to/my/image.png?color=FFA500&pattern=RED_FLASHES&repeat=5"
+busytag-cli --device /dev/ttyACM0 uri "busytag://my-server.com/path/to/my/image.png?color=FFA500&pattern=RED_FLASHES&repeat=5"
 ```
 
 ##### How It Works
@@ -315,7 +312,7 @@ Create a `busytag.desktop` file within `.local/share/applications/`
 [Desktop Entry]
 Type=Application
 Name=BusyTag Scheme Handler
-Exec=uv run main.py --device /dev/ttyACM0 uri %u
+Exec=busytag-cli --device /dev/ttyACM0 uri %u
 StartupNotify=true
 MimeType=x-scheme-handler/busytag;
 # Enable Terminal for Debugging
@@ -333,8 +330,8 @@ gio mime x-scheme-handler/busytag busytag.desktop
 Apply a preset configuration from a YAML file to your BusyTag device. This allows you to batch multiple configurations together.
 
 ```bash
-uv run main.py --device /dev/ttyACM0 preset --help
-usage: main.py preset [-h] preset_file
+busytag-cli --device /dev/ttyACM0 preset --help
+usage: busytag-cli preset [-h] preset_file
 
 positional arguments:
   preset_file           Path to preset configuration file
@@ -346,7 +343,7 @@ options:
 ##### Example
 
 ```bash
-uv run main.py --device /dev/ttyACM0 preset my_preset.yaml
+busytag-cli --device /dev/ttyACM0 preset my_preset.yaml
 ```
 
 See [PRESET_README.md](PRESET_README.md) for detailed documentation on the preset configuration file format and available options.

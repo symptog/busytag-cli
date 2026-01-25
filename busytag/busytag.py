@@ -607,8 +607,7 @@ class BusyTag:
     def getShowAfterDrop(self) -> str:
         """Get the current "Show After Drop" configuration from the BusyTag device.
         
-        This setting determines whether the BusyTag displays patterns after being
-        dropped or moved.
+        Undefined Behavior
         
         Returns:
             String containing the configuration value (0 or 1)
@@ -623,8 +622,7 @@ class BusyTag:
     def setShowAfterDrop(self) -> bool:
         """Enable the "Show After Drop" feature on the BusyTag device.
         
-        This method enables automatic pattern display when the device is dropped
-        or moved.
+        Undefined Behavior.
         
         Returns:
             bool: True if the feature was enabled successfully, False otherwise
@@ -644,8 +642,7 @@ class BusyTag:
     def unsetShowAfterDrop(self) -> bool:
         """Disable the "Show After Drop" feature on the BusyTag device.
         
-        This method disables automatic pattern display when the device is dropped
-        or moved.
+        Undefined Behavior
         
         Returns:
             bool: True if the feature was disabled successfully, False otherwise
@@ -974,6 +971,20 @@ class BusyTag:
             >>> # Get file and save to disk
             >>> tag.getFile("image.jpg", "local_copy.jpg")
         """
+
+        if self.mount_path:
+            src_path = os.path.join(self.mount_path, filename)
+            with open(src_path, "rb") as src_file:
+                data = src_file.read()
+                if output_file:
+                    with open(output_file, "wb") as dst_file:
+                        dst_file.write(data)
+                        os.fsync(dst_file)
+                else:
+                    return data
+            time.sleep(5)
+            return None
+
         # AT+GF=filename
         buf = f"AT+GF={filename}\r\n"
         resp: list[bytes] = self.write([buf.encode()], binary=True) # ty: ignore[invalid-assignment]
@@ -1301,7 +1312,22 @@ class BusyTag:
         return True
 
 class BusyTagPattern:
+    """Represents a pattern configuration for the BusyTag device.
+    
+    This class encapsulates the parameters needed to define a custom LED pattern,
+    including which LEDs to light, their color, brightness scale, speed, and delay.
+    """
+    
     def __init__(self, leds: List[int] = [BusyTag.LEDS.ALL], color: str = "FFFFFF", scale: float = 1.0, speed: int = 100, delay: int = 0):
+        """Initialize a BusyTagPattern with the specified parameters.
+        
+        Args:
+            leds: List of LED enums to apply the pattern to (default: [LEDS.ALL])
+            color: Hex string representing the color (default: "FFFFFF" for white)
+            scale: Float value to scale the color brightness (default: 1.0)
+            speed: Integer value for pattern speed (default: 100)
+            delay: Integer value for delay between pattern steps (default: 0)
+        """
         self.color = parse_color_string(color, scale=scale)
         self.scale = scale
         self.leds = leds
@@ -1309,14 +1335,31 @@ class BusyTagPattern:
         self.delay = delay
     
     def __str__(self):
+        """Return the string representation of the pattern for device transmission.
+        
+        Returns:
+            String formatted as "led_mask,color_hex,speed,delay" suitable for
+            sending to the BusyTag device via AT commands.
+        """
         return f"{sum(self.leds)},{self.color[0]:02x}{self.color[1]:02x}{self.color[2]:02x},{self.speed},{self.delay}"
 
     def __repr__(self):
+        """Return the official string representation of the pattern.
+        
+        Returns:
+            String formatted as "led_mask,color_hex,speed,delay"
+        """
         return self.__str__()
 
 
 class BusyTagDefaultPattern(Enum):
-
+    """Predefined LED patterns for the BusyTag device.
+    
+    This enum provides a collection of commonly used LED patterns that can be
+    easily referenced and applied to the BusyTag device. Each member contains
+    a list of BusyTagPattern objects that define the sequence of LED states.
+    """
+    
     DEFAULT = [
         BusyTagPattern([BusyTag.LEDS.ALL], "1291AF", 1.0, 100, 0),
         BusyTagPattern([BusyTag.LEDS.ALL], "FF0000", 1.0, 100, 0),

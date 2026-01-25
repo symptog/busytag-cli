@@ -15,10 +15,13 @@ A graphical user interface for controlling BusyTag devices.
 Run the GUI application:
 
 ```bash
-uv run gui.py
+busytag-gui
 ```
 
 ### Main Interface
+
+![BusyTag Gui Screenshot](./img/busytag-gui-screenshot.png "BusyTag Gui Screenshot")
+
 
 1. **Device Connection**
    - Select a serial port from the dropdown
@@ -47,20 +50,6 @@ uv run gui.py
 5. **Device Information**
    - View device ID, name, manufacturer, and firmware version
 
-## Requirements
-
-- Python 3.x
-- Tkinter (usually included with Python)
-- pyserial
-- ttkbootstrap (for modern UI styling)
-
-## Installation
-
-Install dependencies:
-
-```bash
-uv sync
-```
 
 ## Command Line Alternative
 

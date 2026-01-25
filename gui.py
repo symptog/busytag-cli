@@ -3,8 +3,9 @@
 
 import tkinter as tk
 from tkinter import messagebox, filedialog
+import io
 import serial.tools.list_ports
-from busytag import BusyTag
+from busytag import BusyTag, BusyTagDefaultPattern
 
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
@@ -106,7 +107,6 @@ class BusyTagGUI:
         pattern_combobox.pack(side=tk.LEFT, padx=10)
         
         # Populate pattern combobox with available patterns
-        from busytag import BusyTagDefaultPattern
         pattern_names = [p.name for p in BusyTagDefaultPattern]
         pattern_combobox["values"] = pattern_names
         
@@ -131,6 +131,7 @@ class BusyTagGUI:
         
         ttk.Button(picture_btn_frame, text="List Pictures", command=self.list_pictures, bootstyle="info-outline").pack(side=tk.LEFT, padx=2)
         ttk.Button(picture_btn_frame, text="Upload Picture", command=self.upload_picture, bootstyle="success-outline").pack(side=tk.LEFT, padx=2)
+        ttk.Button(picture_btn_frame, text="Preview Picture", command=self.preview_picture, bootstyle="warning-outline").pack(side=tk.LEFT, padx=2)
         ttk.Button(picture_btn_frame, text="Display Picture", command=self.display_picture, bootstyle="primary-outline").pack(side=tk.LEFT, padx=2)
         ttk.Button(picture_btn_frame, text="Delete Picture", command=self.delete_picture, bootstyle="danger-outline").pack(side=tk.LEFT, padx=2)
         
@@ -172,7 +173,8 @@ class BusyTagGUI:
         
         try:
             self.bt = BusyTag(self.device_path.get())
-            self.show_device_info()
+            self.update_controls_from_device()
+            self.bt.mount()
             self.status_var.set(f"Connected to {self.device_path.get()}")
         except Exception as e:
             messagebox.showerror("Connection Error", str(e))
@@ -194,6 +196,53 @@ class BusyTagGUI:
             self.info_text.config(state=tk.DISABLED)
         except Exception as e:
             messagebox.showerror("Error", f"Failed to get device info: {e}")
+    
+    def update_controls_from_device(self):
+        """Update all GUI controls with current device settings"""
+        if not self.bt:
+            return
+        
+        try:
+            # Update color from current solid color setting
+            color_response = self.bt.getSolidColor()
+            if color_response:
+                parts = color_response.split(',')
+                if len(parts) >= 2:
+                    led_mask = int(parts[0])
+                    color_hex = parts[1]
+                    # Update color entry
+                    self.color_value.set(color_hex)
+                    # Update LED checkboxes based on mask
+                    self.led_all.set(1)
+                    for i, var in enumerate(self.led_vars):
+                        var.set(1 if (led_mask & (1 << i)) else 0)
+            
+            # Update brightness from current brightness setting
+            brightness_response = self.bt.getDisplayBrightness()
+            if brightness_response:
+                try:
+                    brightness = int(brightness_response)
+                    self.brightness_value.set(str(brightness))
+                except ValueError:
+                    pass
+            
+            # Update pattern combobox with available patterns
+            pattern_names = [p.name for p in BusyTagDefaultPattern]
+            self.pattern_var.set("DEFAULT")
+            
+            # Update info text with current settings
+            self.info_text.config(state=tk.NORMAL)
+            self.info_text.delete(1.0, tk.END)
+            self.info_text.insert(tk.END, f"ID: {self.bt.getDeviceId()}\n")
+            self.info_text.insert(tk.END, f"Name: {self.bt.getDeviceName()}\n")
+            self.info_text.insert(tk.END, f"Manufacturer: {self.bt.getManufactureName()}\n")
+            self.info_text.insert(tk.END, f"Firmware: {self.bt.getFirmwareVersion()}\n")
+            self.info_text.insert(tk.END, f"Solid Color: {self.color_value.get()}\n")
+            self.info_text.insert(tk.END, f"Brightness: {self.brightness_value.get()}%\n")
+            self.info_text.config(state=tk.DISABLED)
+            
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to update controls: {e}")
     
     def pick_color(self):
         """Open a color picker dialog using ttkbootstrap's ColorChooserDialog"""
@@ -322,6 +371,57 @@ class BusyTagGUI:
         except Exception as e:
             messagebox.showerror("Error", f"Failed to display picture: {e}")
     
+    def preview_picture(self):
+        """Preview a selected picture without downloading to disk"""
+        if not self.bt:
+            messagebox.showerror("Error", "Not connected to device")
+            return
+        
+        selection = self.picture_list.curselection()
+        if not selection:
+            messagebox.showerror("Error", "No picture selected")
+            return
+        
+        try:
+            filename = self.picture_list.get(selection[0]).split()[0]
+            picture_data = self.bt.getFile(filename)
+            
+            if picture_data:
+                # Create a preview window
+                preview_window = tk.Toplevel(self.root)
+                preview_window.title(f"Preview: {filename}")
+                preview_window.geometry("240x280")
+                
+                # Create a canvas to display the image
+                canvas = tk.Canvas(preview_window)
+                canvas.pack(fill=tk.BOTH, expand=True)
+                
+                # Load and display the image
+                try:
+                    from PIL import Image, ImageTk
+                    image = Image.open(io.BytesIO(picture_data))
+                    image.thumbnail((240, 280), Image.Resampling.LANCZOS)
+                    photo = ImageTk.PhotoImage(image)
+                    
+                    canvas.create_image(0, 0, anchor=tk.NW, image=photo)
+                    canvas.image = photo  # Keep reference
+                    
+                    # Add filename label
+                    #label = ttk.Label(preview_window, text=filename, font=("Arial", 10, "bold"))
+                    #label.pack(pady=5)
+                    
+                    self.status_var.set(f"Previewed {filename}")
+                except ImportError:
+                    messagebox.showwarning("Warning", "PIL/Pillow not installed. Install with: pip install pillow")
+                    self.status_var.set(f"Failed to preview {filename}")
+                except Exception as e:
+                    messagebox.showerror("Error", f"Failed to preview picture: {e}")
+                    self.status_var.set(f"Failed to preview {filename}")
+            else:
+                messagebox.showerror("Error", "Failed to retrieve picture data")
+        except Exception as e:
+            messagebox.showerror("Error", f"Failed to preview picture: {e}")
+    
     def delete_picture(self):
         """Delete a selected picture"""
         if not self.bt:
@@ -348,7 +448,6 @@ class BusyTagGUI:
             return
         
         try:
-            from busytag import BusyTagDefaultPattern
             pattern_name = self.pattern_var.get()
             repeat = int(self.repeat_value.get())
             
