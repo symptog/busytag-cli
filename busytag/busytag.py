@@ -619,10 +619,14 @@ class BusyTag:
         resp: list[str] = self.write([b'AT+SAD?\r\n']) # ty: ignore[invalid-assignment]
         return resp[0]
 
-    def setShowAfterDrop(self) -> bool:
+    def setShowAfterDrop(self, active: bool = True) -> bool:
         """Enable the "Show After Drop" feature on the BusyTag device.
         
         Undefined Behavior.
+        
+        Args:
+            active: Boolean flag indicating whether to enable (True) or disable (False)
+                   the "Show After Drop" feature (default: True)
         
         Returns:
             bool: True if the feature was enabled successfully, False otherwise
@@ -630,29 +634,11 @@ class BusyTag:
         Example:
             >>> tag.setShowAfterDrop()
             # Enables automatic display after drop
-        """
-        # AT+SAD={0,1}
-        buf = "AT+SAD=1\r\n"
-        resp: list[str] = self.write([buf.encode()]) # ty: ignore[invalid-assignment]
-        if 'OK' not in resp:
-            logger.error(resp)
-            return False
-        return True
-
-    def unsetShowAfterDrop(self) -> bool:
-        """Disable the "Show After Drop" feature on the BusyTag device.
-        
-        Undefined Behavior
-        
-        Returns:
-            bool: True if the feature was disabled successfully, False otherwise
-            
-        Example:
-            >>> tag.unsetShowAfterDrop()
+            >>> tag.setShowAfterDrop(False)
             # Disables automatic display after drop
         """
         # AT+SAD={0,1}
-        buf = "AT+SAD=0\r\n"
+        buf = f"AT+SAD={1 if active else 0}\r\n"
         resp: list[str] = self.write([buf.encode()]) # ty: ignore[invalid-assignment]
         if 'OK' not in resp:
             logger.error(resp)
@@ -674,10 +660,14 @@ class BusyTag:
         resp: list[str] = self.write([b'AT+AWFS?\r\n']) # ty: ignore[invalid-assignment]
         return resp[0]
 
-    def setAllowWebFileServer(self) -> bool:
+    def setAllowWebFileServer(self, active: bool = True) -> bool:
         """Enable the "Allow Web File Server" feature on the BusyTag device.
         
         This method enables file access via web server on the BusyTag device.
+        
+        Args:
+            active: Boolean flag indicating whether to enable (True) or disable (False)
+                   the "Allow Web File Server" feature (default: True)
         
         Returns:
             bool: True if the feature was enabled successfully, False otherwise
@@ -685,29 +675,11 @@ class BusyTag:
         Example:
             >>> tag.setAllowWebFileServer()
             # Enables web file server access
-        """
-        # AT+AWFS={0,1}
-        buf = "AT+AWFS=1\r\n"
-        resp: list[str] = self.write([buf.encode()]) # ty: ignore[invalid-assignment]
-        if 'OK' not in resp:
-            logger.error(resp)
-            return False
-        return True
-
-    def unsetAllowWebFileServer(self) -> bool:
-        """Disable the "Allow Web File Server" feature on the BusyTag device.
-        
-        This method disables file access via web server on the BusyTag device.
-        
-        Returns:
-            bool: True if the feature was disabled successfully, False otherwise
-            
-        Example:
-            >>> tag.unsetAllowWebFileServer()
+            >>> tag.setAllowWebFileServer(False)
             # Disables web file server access
         """
         # AT+AWFS={0,1}
-        buf = "AT+AWFS=0\r\n"
+        buf = f"AT+AWFS={1 if active else 0}\r\n"
         resp: list[str] = self.write([buf.encode()]) # ty: ignore[invalid-assignment]
         if 'OK' not in resp:
             logger.error(resp)
@@ -771,12 +743,16 @@ class BusyTag:
         resp: list[str] = self.write([b'AT+UMSA?\r\n']) # ty: ignore[invalid-assignment]
         return resp[0]
 
-    def setUsbMassStorage(self) -> bool:
+    def setUsbMassStorage(self, active: bool = True) -> bool:
         """Enable USB mass storage mode on the BusyTag device.
         
         This method enables USB mass storage mode, allowing the BusyTag to appear
         as a USB storage device when connected to a computer. This enables file
         transfer via standard file explorer.
+        
+        Args:
+            active: Boolean flag indicating whether to enable (True) or disable (False)
+                   the USB mass storage feature (default: True)
         
         Returns:
             bool: True if USB mass storage was enabled successfully, False otherwise
@@ -784,30 +760,11 @@ class BusyTag:
         Example:
             >>> tag.setUsbMassStorage()
             # Enables USB mass storage mode
-        """
-        # AT+UMSA={0,1}
-        buf = "AT+UMSA=1\r\n"
-        resp: list[str] = self.write([buf.encode()], expect_reset=True) # ty: ignore[invalid-assignment]
-        if 'OK' not in resp:
-            logger.error(resp)
-            return False
-        return True
-
-    def unsetUsbMassStorage(self) -> bool:
-        """Disable USB mass storage mode on the BusyTag device.
-        
-        This method disables USB mass storage mode, preventing the BusyTag from
-        appearing as a USB storage device when connected to a computer.
-        
-        Returns:
-            bool: True if USB mass storage was disabled successfully, False otherwise
-            
-        Example:
-            >>> tag.unsetUsbMassStorage()
+            >>> tag.setUsbMassStorage(False)
             # Disables USB mass storage mode
         """
         # AT+UMSA={0,1}
-        buf = "AT+UMSA=0\r\n"
+        buf = f"AT+UMSA={1 if active else 0}\r\n"
         resp: list[str] = self.write([buf.encode()], expect_reset=True) # ty: ignore[invalid-assignment]
         if 'OK' not in resp:
             logger.error(resp)
@@ -870,11 +827,15 @@ class BusyTag:
         resp: list[str] = self.write([b'AT+AASS?\r\n']) # ty: ignore[invalid-assignment]
         return resp[0]
 
-    def setAutoStorageScan(self) -> bool:
+    def setAutoStorageScan(self, active: bool = True) -> bool:
         """Enable auto storage scan on the BusyTag device.
         
         This method enables automatic storage device scanning, allowing it to detect
         new files automatically.
+        
+        Args:
+            active: Boolean flag indicating whether to enable (True) or disable (False)
+                   the auto storage scan feature (default: True)
         
         Returns:
             bool: True if auto storage scan was enabled successfully, False otherwise
@@ -882,29 +843,11 @@ class BusyTag:
         Example:
             >>> tag.setAutoStorageScan()
             # Enables automatic storage scan on startup
+            >>> tag.setAutoStorageScan(False)
+            # Disables automatic storage scan
         """
         # AT+AASS={0,1}
-        buf = "AT+AASS=1\r\n"
-        resp: list[str] = self.write([buf.encode()]) # ty: ignore[invalid-assignment]
-        if 'OK' not in resp:
-            logger.error(resp)
-            return False
-        return True
-
-    def unsetAutoStorageScan(self) -> bool:
-        """Disable auto storage scan on the BusyTag device.
-        
-        This method disables automatic storage device scanning.
-        
-        Returns:
-            bool: True if auto storage scan was disabled successfully, False otherwise
-            
-        Example:
-            >>> tag.unsetAutoStorageScan()
-            # Disables automatic storage scan on startup
-        """
-        # AT+AASS={0,1}
-        buf = "AT+AASS=0\r\n"
+        buf = f"AT+AASS={1 if active else 0}\r\n"
         resp: list[str] = self.write([buf.encode()]) # ty: ignore[invalid-assignment]
         if 'OK' not in resp:
             logger.error(resp)

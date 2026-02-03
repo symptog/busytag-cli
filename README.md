@@ -378,21 +378,17 @@ def setCustomPattern(self, patterns=[], repeat=255):
 def getDisplayBrightness(self):
 def setDisplayBrightness(self, brightness=100):
 def getShowAfterDrop(self):
-def setShowAfterDrop(self):
-def unsetShowAfterDrop(self):
+def setShowAfterDrop(self, active=True):
 def getAllowWebFileServer(self):
-def setAllowWebFileServer(self):
-def unsetAllowWebFileServer(self):
+def setAllowWebFileServer(self, active=True):
 def getWifiConfig(self):
 def setWifiConfig(self, ssid, password):
 def getUsbMassStorage(self):
-def setUsbMassStorage(self):
-def unsetUsbMassStorage(self):
+def setUsbMassStorage(self, active=True):
 def getShowingPicture(self):
 def setShowingPicture(self, filename):
 def getAutoStorageScan(self):
-def setAutoStorageScan(self):
-def unsetAutoStorageScan(self):
+def setAutoStorageScan(self, active=True):
 def playPattern(self, allow=True, repeat=255):
 def getFile(self, filename, output_file=None):
 def putFile(self, filepath):
